@@ -1,0 +1,56 @@
+name: taco_sales_insight
+description: "TACO Sales Insight Mobile App for Sales Representatives"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI Components
+  cupertino_icons: ^1.0.8
+  
+  # Navigation
+  go_router: ^14.0.1
+  
+  # State Management
+  provider: ^6.1.2
+  
+  # HTTP Client
+  http: ^1.2.2
+  
+  # Local Storage
+  shared_preferences: ^2.2.2
+  
+  # Date Formatting
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+
+  uses-material-design: true
+
+  # Assets
+  assets:
+    - assets/images/
+    
+  # Fonts
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700

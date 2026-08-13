@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:taco_sales_insight/models/app_notification.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';
@@ -88,7 +89,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         Text(
                           notifications
                               .where((n) =>
-                                  n.dateTime.day == DateTime.now().day)
+                                  n.timestamp.day == DateTime.now().day)
                               .length
                               .toString(),
                           style: AppTextStyles.displaySmall.copyWith(
@@ -107,7 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             if (notifications.isEmpty)
               const EmptyState(
                 title: 'Tidak ada notifikasi',
-                description: 'Semua notifikasi sudah dibaca',
+                subtitle: 'Semua notifikasi sudah dibaca',
                 icon: Icons.notifications_none,
               )
             else
@@ -147,7 +148,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   : _showClearConfirmation,
               type: ButtonType.outline,
               isFullWidth: true,
-              icon: Icons.delete_outline,
+              icon: const Icon(Icons.delete_outline),
             ),
             const SizedBox(height: 32),
           ],
@@ -156,7 +157,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
   
-  Widget _buildNotificationCard(Notification notification) {
+  Widget _buildNotificationCard(AppNotification notification) {
     Color notificationColor;
     IconData notificationIcon;
     
@@ -177,6 +178,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         notificationColor = AppColors.info;
         notificationIcon = Icons.info;
         break;
+      case NotificationType.actionData:
+        notificationColor = AppColors.primary;
+        notificationIcon = Icons.notifications;
+        break;
       case NotificationType.reminder:
       default:
         notificationColor = AppColors.primary;
@@ -188,7 +193,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       child: TacoCard(
         backgroundColor: notification.isRead
             ? AppColors.surface
-            : AppColors.primary.withOpacity(0.05),
+            : AppColors.primary,
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -196,7 +201,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: notificationColor.withOpacity(0.1),
+                color : notificationColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -233,7 +238,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    notification.message,
+                    (notification.body ?? ''),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -248,7 +253,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        _formatTime(notification.dateTime),
+                        _formatTime(notification.timestamp),
                         style: AppTextStyles.caption,
                       ),
                       const Spacer(),
@@ -328,8 +333,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
   
-  void _toggleReadStatus(Notification notification) {
-    // In a real app, this would update the notification status
+  void _toggleReadStatus(AppNotification notification) {
     setState(() {
       // This is just for UI demonstration
       // In reality, you'd update the data model
@@ -350,9 +354,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
   
-  void _handleNotificationAction(Notification notification) {
+  void _handleNotificationAction(AppNotification notification) {
     if (notification.actionData != null) {
-      // Handle navigation based on actionData
       if (notification.actionData!.contains('badge')) {
         Navigator.pushNamed(context, '/profile/badges');
       }
@@ -386,7 +389,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 );
               },
               isFullWidth: false,
-              type: ButtonType.error,
+              type: ButtonType.danger,
             ),
           ],
         );

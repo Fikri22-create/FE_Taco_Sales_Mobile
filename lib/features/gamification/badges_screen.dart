@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Badge;
 import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:taco_sales_insight/models/gamification.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';

@@ -3,6 +3,7 @@ import 'package:taco_sales_insight/data/mock_data.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';
+import 'package:taco_sales_insight/models/gamification.dart';
 
 class StreakScreen extends StatelessWidget {
   const StreakScreen({super.key});
@@ -11,7 +12,7 @@ class StreakScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final streakData = MockData.streakData;
     final currentStreak = streakData.currentStreak;
-    final longestStreak = streakData.longestStreak;
+    final bestStreak = streakData.bestStreak;
     
     return Scaffold(
       appBar: AppBar(
@@ -22,7 +23,6 @@ class StreakScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Current Streak Card
             TacoCard(
               child: Column(
                 children: [
@@ -38,7 +38,7 @@ class StreakScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Dimulai ${_formatDate(streakData.streakStartDate)}',
+                    'Dimulai ${_formatDate(streakData.streakStarted)}',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                     ),
@@ -48,7 +48,6 @@ class StreakScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Stats
             Row(
               children: [
                 Expanded(
@@ -56,11 +55,11 @@ class StreakScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Text(
-                          'Longest Streak',
+                          'Best Streak',
                           style: AppTextStyles.caption,
                         ),
                         Text(
-                          '$longestStreak hari',
+                          '$bestStreak hari',
                           style: AppTextStyles.displaySmall.copyWith(
                             color: AppColors.primary,
                           ),
@@ -92,7 +91,6 @@ class StreakScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Streak Calendar
             const SectionHeader(
               title: 'Kalender Streak',
               subtitle: '30 hari terakhir',
@@ -111,7 +109,6 @@ class StreakScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Milestones
             const SectionHeader(
               title: 'Milestones',
               subtitle: 'Target streak selanjutnya',
@@ -215,7 +212,12 @@ class StreakScreen extends StatelessWidget {
       itemCount: days.length,
       itemBuilder: (context, index) {
         final date = days[index];
-        final hasReport = streakData.dailyProgress[date] ?? false;
+        // Check if this date exists in streakDays
+        final hasReport = streakData.streakDays.any((streakDay) => 
+            streakDay.date.year == date.year &&
+            streakDay.date.month == date.month &&
+            streakDay.date.day == date.day &&
+            streakDay.completed);
         final isToday = date.year == today.year &&
                         date.month == today.month &&
                         date.day == today.day;

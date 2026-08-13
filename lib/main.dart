@@ -3,13 +3,7 @@ import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/features/home/home_screen.dart';
 import 'package:taco_sales_insight/features/history/history_screen.dart';
 import 'package:taco_sales_insight/features/profile/profile_screen.dart';
-import 'package:taco_sales_insight/features/report/select_outlet_screen.dart';
-import 'package:taco_sales_insight/features/report/new_outlet_screen.dart';
-import 'package:taco_sales_insight/features/report/input_mode_screen.dart';
-import 'package:taco_sales_insight/features/report/voice_input_screen.dart';
-import 'package:taco_sales_insight/features/report/processing_screen.dart';
-import 'package:taco_sales_insight/features/report/ai_confirmation_screen.dart';
-import 'package:taco_sales_insight/features/report/report_summary_screen.dart';
+import 'package:taco_sales_insight/features/report/text_input_screen.dart';
 import 'package:taco_sales_insight/features/gamification/points_screen.dart';
 import 'package:taco_sales_insight/features/gamification/badges_screen.dart';
 import 'package:taco_sales_insight/features/gamification/streak_screen.dart';
@@ -59,10 +53,10 @@ class TacoSalesInsightApp extends StatelessWidget {
             vertical: 14,
           ),
         ),
-        cardTheme: CardTheme(
+        cardTheme: const CardThemeData(
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -82,13 +76,7 @@ class TacoSalesInsightApp extends StatelessWidget {
         '/home': (context) => const MainNavigationScreen(initialIndex: 0),
         '/history': (context) => const MainNavigationScreen(initialIndex: 1),
         '/profile': (context) => const MainNavigationScreen(initialIndex: 2),
-        '/report/select-outlet': (context) => const SelectOutletScreen(),
-        '/report/new-outlet': (context) => const NewOutletScreen(),
-        '/report/input-mode': (context) => const InputModeScreenWrapper(),
-        '/report/voice-input': (context) => const VoiceInputScreenWrapper(),
-        '/report/processing': (context) => const ProcessingScreenWrapper(),
-        '/report/ai-confirmation': (context) => const AiConfirmationScreenWrapper(),
-        '/report/summary': (context) => const ReportSummaryScreenWrapper(),
+        '/report/text-input': (context) => const TextInputScreenWrapper(),
         '/profile/points': (context) => const PointsScreen(),
         '/profile/badges': (context) => const BadgesScreen(),
         '/profile/streak': (context) => const StreakScreen(),
@@ -114,26 +102,26 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    HistoryScreen(),
-    ProfileScreen(),
+  static final List<Widget> _screens = [
+    const HomeScreen(),
+    const HistoryScreen(),
+    const ProfileScreen(),
   ];
 
-  static const List<BottomNavigationBarItem> _navItems = [
-    BottomNavigationBarItem(
-      icon: Icon(Icons.home_outlined),
-      activeIcon: Icon(Icons.home),
+  static const List<_NavigationItem> _navItems = [
+    _NavigationItem(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home,
       label: 'Home',
     ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.history_outlined),
-      activeIcon: Icon(Icons.history),
+    _NavigationItem(
+      icon: Icons.history_outlined,
+      activeIcon: Icons.history,
       label: 'History',
     ),
-    BottomNavigationBarItem(
-      icon: Icon(Icons.person_outlined),
-      activeIcon: Icon(Icons.person),
+    _NavigationItem(
+      icon: Icons.person_outlined,
+      activeIcon: Icons.person,
       label: 'Profile',
     ),
   ];
@@ -148,14 +136,73 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: _navItems,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
+      floatingActionButton: _buildFloatingNavigationDock(),
+    );
+  }
+
+  Widget _buildFloatingNavigationDock() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(_navItems.length, (index) {
+          final item = _navItems[index];
+          final isActive = _selectedIndex == index;
+          
+          return GestureDetector(
+            onTap: () => _onItemTapped(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: isActive ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isActive ? item.activeIcon : item.icon,
+                    color: isActive ? AppColors.primary : AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    item.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                      color: isActive ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
+}
+
+class _NavigationItem {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  const _NavigationItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
 }

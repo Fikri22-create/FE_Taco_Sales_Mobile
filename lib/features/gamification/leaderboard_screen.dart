@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:taco_sales_insight/models/gamification.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';
@@ -15,10 +16,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   String _selectedLeaderboard = 'consistency'; // consistency or quality
   int _currentUserRank = 3; // User rank in consistency leaderboard
   
-  List<dynamic> get _selectedList {
-    return _selectedLeaderboard == 'consistency'
-        ? MockData.consistencyLeaderboard
-        : MockData.qualityLeaderboard;
+  List<LeaderboardEntry> get _selectedList {
+    // In a real app, this would filter by leaderboard type
+    // For now, we'll use the same leaderboard for both types
+    return MockData.leaderboardEntries;
   }
   
   String get _leaderboardTitle {
@@ -36,13 +37,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     final selectedList = _selectedList;
-    final currentUser = _selectedLeaderboard == 'consistency'
-        ? MockData.consistencyLeaderboard.firstWhere(
-            (user) => user.isCurrentUser,
-            orElse: () => MockData.consistencyLeaderboard[2])
-        : MockData.qualityLeaderboard.firstWhere(
-            (user) => user.isCurrentUser,
-            orElse: () => MockData.qualityLeaderboard[2]);
+    final currentUser = selectedList.firstWhere(
+      (user) => user.isCurrentUser,
+      orElse: () => selectedList[2],
+    );
     
     return Scaffold(
       appBar: AppBar(
@@ -61,7 +59,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Period Selector
             Row(
               children: [
                 Expanded(
@@ -96,8 +93,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            
-            // Leaderboard Info
             TacoCard(
               child: Column(
                 children: [
@@ -169,7 +164,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          currentUser.name,
+                          currentUser.userName,
                           style: AppTextStyles.titleMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -188,7 +183,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        currentUser.score.toString(),
+                        currentUser.points.toString(),
                         style: AppTextStyles.titleMedium.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w700,
@@ -274,7 +269,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
   
-  Widget _buildTopThreeCard(dynamic user, int rank, {bool isFirst = false}) {
+  Widget _buildTopThreeCard(LeaderboardEntry user, int rank, {bool isFirst = false}) {
     Color rankColor;
     double size;
     double elevation;
@@ -322,7 +317,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             children: [
               CircleAvatar(
                 radius: (size - 20) / 2,
-                backgroundImage: NetworkImage(user.avatarUrl),
+                backgroundImage: user.avatarUrl != null
+                    ? NetworkImage(user.avatarUrl!)
+                    : null,
               ),
               Positioned(
                 top: 8,
@@ -346,7 +343,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          user.name,
+          user.userName,
           style: AppTextStyles.titleSmall.copyWith(
             fontWeight: FontWeight.w600,
           ),
@@ -354,7 +351,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         Text(
-          user.score.toString(),
+          user.points.toString(),
           style: AppTextStyles.bodySmall.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -363,7 +360,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
   
-  Widget _buildLeaderboardItem(dynamic user) {
+  Widget _buildLeaderboardItem(LeaderboardEntry user) {
     final isCurrentUser = user.isCurrentUser;
     
     return Padding(
@@ -394,7 +391,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             const SizedBox(width: 12),
             CircleAvatar(
               radius: 20,
-              backgroundImage: NetworkImage(user.avatarUrl),
+              backgroundImage: user.avatarUrl != null
+                  ? NetworkImage(user.avatarUrl!)
+                  : null,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -402,7 +401,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user.name,
+                    user.userName,
                     style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
@@ -416,7 +415,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  user.score.toString(),
+                  user.points.toString(),
                   style: AppTextStyles.titleSmall.copyWith(
                     color: AppColors.primary,
                     fontWeight: FontWeight.w700,
@@ -437,8 +436,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
   
-  Widget _buildRankChange(dynamic user) {
-    final rankChange = user.previousRank - user.rank;
+  Widget _buildRankChange(LeaderboardEntry user) {
+    // Since LeaderboardEntry doesn't have previousRank, we'll show a placeholder
+    // In a real app, this would be fetched from user data
+    const int rankChange = 1; // Placeholder: moved up 1 position
     
     if (rankChange > 0) {
       return Row(

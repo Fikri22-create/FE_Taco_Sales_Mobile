@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:taco_sales_insight/core/state/app_state.dart';
+import 'package:taco_sales_insight/models/report.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';
-import 'package:taco_sales_insight/models/report.dart';
+import 'package:taco_sales_insight/shared/report_detail_sheet.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -13,159 +16,101 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  final List<String> _filterOptions = ['Semua', 'Minggu Ini', 'Bulan Ini', 'Voice', 'Text'];
-  String _selectedFilter = 'Semua';
+  final List<String> _filterKeys = [
+    'All',
+    'Last 7 Days',
+    'This Month',
+    'Voice',
+    'Text',
+  ];
+  String _selectedFilterKey = 'All';
   String _searchQuery = '';
   bool _isLoading = false;
+  String? _errorMessage;
 
-  List<Report> get _filteredReports {
-    List<Report> reports = MockData.reports;
+  List<Report> _filterReports(List<Report> reports) {
+    final query = _searchQuery.trim().toLowerCase();
+    final now = DateTime.now();
 
-    if (_searchQuery.isNotEmpty) {
-      reports = reports.where((report) {
-        return report.outletName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          report.content.toLowerCase().contains(_searchQuery.toLowerCase());
-      }).toList();
-    }
+    return reports.where((report) {
+      if (query.isNotEmpty) {
+        final matchesQuery =
+            report.outletName.toLowerCase().contains(query) ||
+            report.content.toLowerCase().contains(query);
+        if (!matchesQuery) return false;
+      }
 
-    if (_selectedFilter == 'Voice') {
-      reports = reports.where((report) => report.inputType == ReportInputType.voice).toList();
-    } else if (_selectedFilter == 'Text') {
-      reports = reports.where((report) => report.inputType == ReportInputType.text).toList();
-    }
+      switch (_selectedFilterKey) {
+        case 'Last 7 Days':
+          final weekAgo = now.subtract(const Duration(days: 7));
+          if (report.createdAt.isBefore(weekAgo)) return false;
+          break;
+        case 'This Month':
+          if (report.createdAt.year != now.year ||
+              report.createdAt.month != now.month) {
+            return false;
+          }
+          break;
+        case 'Voice':
+          if (report.inputType != ReportInputType.voice) return false;
+          break;
+        case 'Text':
+          if (report.inputType != ReportInputType.text) return false;
+          break;
+      }
 
-    return reports;
+      return true;
+    }).toList();
   }
 
-  void _refreshData() {
+  Future<void> _refreshData() async {
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      // Simulasi proses muat ulang data dari AppState.
+      await Future.delayed(const Duration(milliseconds: 800));
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _errorMessage =
+            'Terjadi kesalahan saat memuat laporan. Silakan coba lagi.';
       });
-    });
-  }
-
-  void _showFilterBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'Filter Laporan',
-                  style: AppTextStyles.titleMedium,
-                ),
-              ),
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: AppColors.divider,
-              ),
-              ..._filterOptions.map((filter) {
-                return Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              filter,
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                color: _selectedFilter == filter
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                                fontWeight: _selectedFilter == filter
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                          if (_selectedFilter == filter)
-                            const Icon(
-                              Icons.check,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-              const SizedBox(height: 8),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildReportStatusBadge(Report report) {
-    switch (report.status) {
-      case ReportStatus.completed:
-        return TacoBadge.success(text: 'Selesai');
-      case ReportStatus.confirmed:
-        return TacoBadge.success(text: 'Dikonfirmasi');
-      case ReportStatus.processing:
-        return TacoBadge.info(text: 'Diproses');
-      case ReportStatus.draft:
-        return TacoBadge.warning(text: 'Draf');
-      case ReportStatus.needsConfirmation:
-        return TacoBadge.warning(text: 'Perlu Konfirmasi');
-      case ReportStatus.failed:
-        return TacoBadge.error(text: 'Gagal');
-      default:
-        return TacoBadge(text: report.status.name);
+      return;
     }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Widget _buildConfidenceBadge(Report report) {
     Color color;
     String text;
-    
+
     switch (report.confidence) {
       case ReportConfidence.veryHigh:
         color = AppColors.success;
-        text = 'Sangat Tinggi';
+        text = 'Very High';
       case ReportConfidence.high:
         color = AppColors.success;
-        text = 'Tinggi';
+        text = 'High';
       case ReportConfidence.medium:
         color = AppColors.warning;
-        text = 'Sedang';
+        text = 'Medium';
       case ReportConfidence.low:
         color = AppColors.error;
-        text = 'Rendah';
+        text = 'Low';
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -179,450 +124,402 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _viewReportDetails(Report report) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.8,
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
+    showReportDetailSheet(context, report);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final filteredReports = _filterReports(appState.reports);
+    final isOffline = appState.isOfflineSimulated;
+
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.background,
+              AppColors.background.withValues(alpha: 0.5),
+              Colors.white,
+              AppColors.primary.withValues(alpha: 0.02),
+            ],
+            stops: const [0, 0.3, 0.7, 1.0],
           ),
-          child: SingleChildScrollView(
-            child: Column(
+        ),
+        child: Column(
+          children: [
+            _buildHeader(context, filteredReports.length),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                children: [
+                  TacoTextField(
+                    label: 'Search',
+                    hintText: 'Find reports by outlet name or content',
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    prefixIcon: const Icon(Iconsax.search_normal_1_copy, size: 20),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 40,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: _filterKeys.map((filterKey) {
+                        final isSelected = _selectedFilterKey == filterKey;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 220),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        AppColors.primary,
+                                        AppColors.secondary.withValues(alpha: 0.8),
+                                      ],
+                                    )
+                                  : null,
+                              color: isSelected ? null : AppColors.surfaceVariant,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.transparent
+                                    : AppColors.border,
+                                width: 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(alpha: 0.2),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedFilterKey = filterKey;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  child: Text(
+                                    filterKey,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _buildBody(filteredReports, isOffline),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, int reportCount) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.secondary.withValues(alpha: 0.7),
+          ],
+        ),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Detail Laporan',
-                        style: AppTextStyles.titleLarge,
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                      ),
-                    ],
+                Text(
+                  'History',
+                  style: AppTextStyles.headlineMedium.copyWith(
+                    color: Colors.white,
                   ),
                 ),
-                Divider(height: 1, thickness: 1, color: AppColors.divider), 
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TacoCard(
-                        child: Row(
+                const SizedBox(height: 6),
+                Text(
+                  '$reportCount Reports',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+            IconButton(
+              onPressed: _refreshData,
+              icon: const Icon(Iconsax.refresh_copy, color: Colors.white),
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.white.withValues(alpha: 0.15),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(List<Report> filteredReports, bool isOffline) {
+    if (_isLoading) {
+      return LoadingIndicator(message: 'Loading reports...');
+    }
+
+    if (_errorMessage != null) {
+      return ErrorState(
+        title: 'Error loading reports',
+        subtitle: _errorMessage,
+        retryText: 'Retry',
+        onRetry: _refreshData,
+      );
+    }
+
+    if (isOffline) {
+      return OfflineState(
+        subtitle: 'You are offline',
+        retryText: 'Retry',
+        onRetry: _refreshData,
+      );
+    }
+
+    if (filteredReports.isEmpty) {
+      return EmptyState(
+        title: 'No Reports',
+        subtitle: _searchQuery.isNotEmpty
+            ? 'No reports found matching your search'
+            : 'No reports available',
+        actionText: 'Create Report',
+        onAction: () {
+          Navigator.pushNamed(context, '/report/select-outlet');
+        },
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 100),
+        itemCount: filteredReports.length,
+        itemBuilder: (context, index) {
+          final report = filteredReports[index];
+          final isVoice = report.inputType == ReportInputType.voice;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _viewReportDetails(report),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.store,
-                              color: AppColors.primary,
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: isVoice
+                                      ? [
+                                          AppColors.secondary,
+                                          AppColors.secondary
+                                              .withValues(alpha: 0.7),
+                                        ]
+                                      : [
+                                          AppColors.primary,
+                                          AppColors.primary
+                                              .withValues(alpha: 0.7),
+                                        ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: (isVoice
+                                            ? AppColors.secondary
+                                            : AppColors.primary)
+                                        .withValues(alpha: 0.15),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                isVoice
+                                    ? Iconsax.microphone_2_copy
+                                    : Iconsax.document_text_1_copy,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     report.outletName,
-                                    style: AppTextStyles.titleMedium,
+                                    style: AppTextStyles.titleSmall.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    report.createdAt.toString(),
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildReportStatusBadge(report),
-                          const SizedBox(width: 8),
-                          _buildConfidenceBadge(report),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  size: 14,
-                                  color: AppColors.accent,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${report.pointsEarned} points',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Isi Laporan',
-                            style: AppTextStyles.titleSmall.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            report.content,
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      TacoCard(
-                        backgroundColor: AppColors.surfaceVariant,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Informasi Laporan',
-                              style: AppTextStyles.titleSmall.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        '${report.metadata.wordCount}',
-                                        style: AppTextStyles.titleMedium.copyWith(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Kata',
-                                        style: AppTextStyles.caption,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        report.inputType == ReportInputType.voice
-                                            ? 'Voice'
-                                            : 'Text',
-                                        style: AppTextStyles.titleMedium.copyWith(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Input Type',
-                                        style: AppTextStyles.caption,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        report.metadata.processingTimeSeconds.toString(),
-                                        style: AppTextStyles.titleMedium.copyWith(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Detik',
-                                        style: AppTextStyles.caption,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      if (report.aiAnalysis != null) ...[
-                        TacoCard(
-                          backgroundColor: AppColors.infoLight,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Analisis AI',
-                                style: AppTextStyles.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                report.aiAnalysis!.summary,
-                                style: AppTextStyles.bodyMedium,
-                              ),
-                              const SizedBox(height: 12),
-                              if (report.aiAnalysis!.keyFindings.isNotEmpty) ...[
-                                Text(
-                                  'Key Findings:',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                ...report.aiAnalysis!.keyFindings.map((finding) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Text(
-                                      '• $finding',
-                                      style: AppTextStyles.bodySmall,
-                                    ),
-                                  );
-                                }),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TacoButton(
-                              text: 'Tutup',
-                              onPressed: () => Navigator.pop(context),
-                              type: ButtonType.outline,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TacoButton(
-                              text: 'Edit',
-                              onPressed: () {
-                              },
-                              type: ButtonType.secondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final filteredReports = _filteredReports;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Riwayat Laporan'),
-        actions: [
-          IconButton(
-            onPressed: _refreshData,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                TacoTextField(
-                  label: 'Cari laporan',
-                  hintText: 'Cari berdasarkan outlet atau isi laporan...',
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value;
-                    });
-                  },
-                  prefixIcon: const Icon(Icons.search, size: 20),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 40,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: _filterOptions.map((filter) {
-                      final isSelected = _selectedFilter == filter;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(filter),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            setState(() {
-                              _selectedFilter = selected ? filter : 'Semua';
-                            });
-                          },
-                          backgroundColor: AppColors.surfaceVariant,
-                          selectedColor: AppColors.primary.withOpacity(0.1),
-                          labelStyle: AppTextStyles.bodySmall.copyWith(
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                            side: BorderSide(
-                              color: isSelected ? AppColors.primary : AppColors.border,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, thickness: 1, color: AppColors.divider),
-          Expanded(
-            child: _isLoading
-                ? const LoadingIndicator(message: 'Memuat laporan...')
-                : filteredReports.isEmpty
-                    ? EmptyState(
-                        title: 'Tidak ada laporan',
-                        subtitle: _searchQuery.isNotEmpty
-                            ? 'Tidak ada laporan yang cocok dengan pencarian Anda'
-                            : 'Mulai dengan membuat laporan pertama Anda',
-                        actionText: 'Buat Laporan',
-                        onAction: () {
-                        },
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () async {
-                          _refreshData();
-                          return Future.delayed(const Duration(milliseconds: 500));
-                        },
-                        child: ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          itemCount: filteredReports.length,
-                          itemBuilder: (context, index) {
-                            final report = filteredReports[index];
-                            return TacoListItem(
-                              leading: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: report.inputType == ReportInputType.voice
-                                      ? AppColors.secondary.withOpacity(0.1)
-                                      : AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Icon(
-                                    report.inputType == ReportInputType.voice
-                                        ? Icons.mic
-                                        : Icons.text_fields,
-                                    color: report.inputType == ReportInputType.voice
-                                        ? AppColors.secondary
-                                        : AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                report.outletName,
-                                style: AppTextStyles.titleSmall.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    report.content.length > 80
-                                        ? '${report.content.substring(0, 80)}...'
+                                    report.content.length > 60
+                                        ? '${report.content.substring(0, 60)}...'
                                         : report.content,
                                     style: AppTextStyles.bodySmall.copyWith(
                                       color: AppColors.textSecondary,
                                     ),
-                                    maxLines: 2,
+                                    maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      _buildReportStatusBadge(report),
-                                      const SizedBox(width: 8),
-                                      _buildConfidenceBadge(report),
-                                      const Spacer(),
-                                      Text(
-                                        '${report.createdAt.day}/${report.createdAt.month}/${report.createdAt.year}',
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: AppColors.textTertiary,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ],
                               ),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: AppColors.accent.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 12,
-                                      color: AppColors.accent,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${report.pointsEarned}',
-                                      style: AppTextStyles.caption.copyWith(
-                                        color: AppColors.accent,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Divider(
+                          height: 1,
+                          color: AppColors.divider.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  StatusBadge(status: report.status),
+                                  const SizedBox(width: 8),
+                                  _buildConfidenceBadge(report),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.accent,
+                                    AppColors.accent.withValues(alpha: 0.8),
                                   ],
                                 ),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  width: 1,
+                                ),
                               ),
-                              onTap: () => _viewReportDetails(report),
-                            );
-                          },
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Iconsax.star_1_copy,
+                                    size: 14,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${report.pointsEarned}',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-          ),
-        ],
+                        const SizedBox(height: 8),
+                        Text(
+                          '${report.createdAt.day}/${report.createdAt.month}/${report.createdAt.year}',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

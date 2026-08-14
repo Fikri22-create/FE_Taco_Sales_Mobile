@@ -31,6 +31,40 @@ class User {
     required this.stats,
   });
 
+  User copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? phone,
+    String? avatarUrl,
+    String? region,
+    String? salesCode,
+    int? totalPoints,
+    int? currentStreak,
+    int? bestStreak,
+    int? totalReports,
+    DateTime? joinedDate,
+    DateTime? lastActive,
+    UserStats? stats,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      phone: phone ?? this.phone,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      region: region ?? this.region,
+      salesCode: salesCode ?? this.salesCode,
+      totalPoints: totalPoints ?? this.totalPoints,
+      currentStreak: currentStreak ?? this.currentStreak,
+      bestStreak: bestStreak ?? this.bestStreak,
+      totalReports: totalReports ?? this.totalReports,
+      joinedDate: joinedDate ?? this.joinedDate,
+      lastActive: lastActive ?? this.lastActive,
+      stats: stats ?? this.stats,
+    );
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'],

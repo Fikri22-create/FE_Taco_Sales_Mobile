@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:taco_sales_insight/core/state/app_state.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
 import 'package:taco_sales_insight/shared/common_widgets.dart';
@@ -13,114 +15,36 @@ class PointsScreen extends StatefulWidget {
 }
 
 class _PointsScreenState extends State<PointsScreen> {
-  final List<String> _filterOptions = ['Semua', 'Hari Ini', 'Minggu Ini', 'Bulan Ini'];
-  String _selectedFilter = 'Semua';
-  List<PointTransaction> _filteredTransactions = [];
+  final List<String> _filterOptions = ['All', 'Today', 'This Week', 'This Month'];
+  String _selectedFilter = 'All';
 
-  @override
-  void initState() {
-    super.initState();
-    _filteredTransactions = _getMockTransactions();
-  }
-
-  List<PointTransaction> _getMockTransactions() {
-    return [
-      PointTransaction(
-        id: 'txn_001',
-        amount: 25,
-        type: PointTransactionType.report,
-        description: 'Laporan Supermarket Mega Jaya',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-        relatedEntityId: 'report_001',
-        relatedEntityType: 'report',
-      ),
-      PointTransaction(
-        id: 'txn_002',
-        amount: 10,
-        type: PointTransactionType.streak,
-        description: 'Maintain 7-day streak',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        relatedEntityId: 'streak_001',
-        relatedEntityType: 'streak',
-      ),
-      PointTransaction(
-        id: 'txn_003',
-        amount: 15,
-        type: PointTransactionType.badge,
-        description: 'Unlocked Consistency King badge',
-        timestamp: DateTime.now().subtract(const Duration(days: 1)),
-        relatedEntityId: 'badge_002',
-        relatedEntityType: 'badge',
-      ),
-      PointTransaction(
-        id: 'txn_004',
-        amount: 20,
-        type: PointTransactionType.report,
-        description: 'Laporan Minimarket Sejahtera',
-        timestamp: DateTime.now().subtract(const Duration(days: 2)),
-        relatedEntityId: 'report_002',
-        relatedEntityType: 'report',
-      ),
-      PointTransaction(
-        id: 'txn_005',
-        amount: 50,
-        type: PointTransactionType.bonus,
-        description: 'Weekly achievement bonus',
-        timestamp: DateTime.now().subtract(const Duration(days: 3)),
-        relatedEntityId: 'bonus_001',
-        relatedEntityType: 'bonus',
-      ),
-      PointTransaction(
-        id: 'txn_006',
-        amount: 10,
-        type: PointTransactionType.streak,
-        description: 'Maintain 6-day streak',
-        timestamp: DateTime.now().subtract(const Duration(days: 4)),
-        relatedEntityId: 'streak_001',
-        relatedEntityType: 'streak',
-      ),
-      PointTransaction(
-        id: 'txn_007',
-        amount: 15,
-        type: PointTransactionType.report,
-        description: 'Laporan Pasar Tradisional Menteng',
-        timestamp: DateTime.now().subtract(const Duration(days: 5)),
-        relatedEntityId: 'report_003',
-        relatedEntityType: 'report',
-      ),
-    ];
-  }
-
-  void _filterTransactions() {
+  List<PointTransaction> _filterTransactions(List<PointTransaction> transactions) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final weekAgo = now.subtract(const Duration(days: 7));
     final monthAgo = now.subtract(const Duration(days: 30));
 
-    List<PointTransaction> filtered = _getMockTransactions();
+    List<PointTransaction> filtered = List.of(transactions);
 
     switch (_selectedFilter) {
-      case 'Hari Ini':
+      case 'Today':
         filtered = filtered.where((txn) => txn.timestamp.isAfter(today)).toList();
         break;
-      case 'Minggu Ini':
+      case 'This Week':
         filtered = filtered.where((txn) => txn.timestamp.isAfter(weekAgo)).toList();
         break;
-      case 'Bulan Ini':
+      case 'This Month':
         filtered = filtered.where((txn) => txn.timestamp.isAfter(monthAgo)).toList();
         break;
-      // 'Semua' - no filtering needed
     }
 
-    setState(() {
-      _filteredTransactions = filtered;
-    });
+    return filtered;
   }
 
   String _getTransactionTypeLabel(PointTransactionType type) {
     switch (type) {
       case PointTransactionType.report:
-        return 'Laporan';
+        return 'Report';
       case PointTransactionType.streak:
         return 'Streak';
       case PointTransactionType.badge:
@@ -132,26 +56,26 @@ class _PointsScreenState extends State<PointsScreen> {
       case PointTransactionType.referral:
         return 'Referral';
       case PointTransactionType.correction:
-        return 'Koreksi';
+        return 'Correction';
     }
   }
 
   IconData _getTransactionTypeIcon(PointTransactionType type) {
     switch (type) {
       case PointTransactionType.report:
-        return Icons.description;
+        return Iconsax.document_text_1_copy;
       case PointTransactionType.streak:
-        return Icons.local_fire_department;
+        return Iconsax.flash_copy;
       case PointTransactionType.badge:
-        return Icons.workspace_premium;
+        return Iconsax.award_copy;
       case PointTransactionType.bonus:
-        return Icons.card_giftcard;
+        return Iconsax.award_copy;
       case PointTransactionType.achievement:
-        return Icons.emoji_events;
+        return Iconsax.cup_copy;
       case PointTransactionType.referral:
-        return Icons.group_add;
+        return Iconsax.user_add_copy;
       case PointTransactionType.correction:
-        return Icons.edit;
+        return Iconsax.edit_copy;
     }
   }
 
@@ -160,7 +84,7 @@ class _PointsScreenState extends State<PointsScreen> {
       case PointTransactionType.report:
         return AppColors.primary;
       case PointTransactionType.streak:
-        return AppColors.streakActive;
+        return AppColors.success;
       case PointTransactionType.badge:
         return AppColors.secondary;
       case PointTransactionType.bonus:
@@ -168,286 +92,554 @@ class _PointsScreenState extends State<PointsScreen> {
       case PointTransactionType.achievement:
         return AppColors.gold;
       case PointTransactionType.referral:
-        return AppColors.chartPurple;
+        return AppColors.secondary;
       case PointTransactionType.correction:
         return AppColors.warning;
     }
   }
 
-  Widget _buildPointsSummary() {
-    final user = MockData.currentUser;
-    final weeklyTotal = _getMockTransactions()
-        .where((txn) => txn.timestamp.isAfter(DateTime.now().subtract(const Duration(days: 7))))
-        .fold(0, (sum, txn) => sum + txn.amount);
-    
-    final monthlyTotal = _getMockTransactions()
-        .where((txn) => txn.timestamp.isAfter(DateTime.now().subtract(const Duration(days: 30))))
+  @override
+  Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final filteredTransactions = _filterTransactions(appState.pointTransactions);
+    final user = appState.user;
+    final now = DateTime.now();
+
+    final weeklyTotal = appState.pointTransactions
+        .where((txn) => txn.timestamp.isAfter(now.subtract(const Duration(days: 7))))
         .fold(0, (sum, txn) => sum + txn.amount);
 
-    return TacoCard(
-      child: Column(
+    final monthlyTotal = appState.pointTransactions
+        .where((txn) => txn.timestamp.isAfter(now.subtract(const Duration(days: 30))))
+        .fold(0, (sum, txn) => sum + txn.amount);
+
+    return Scaffold(
+      body: Stack(
         children: [
+          // Gradient background
           Container(
-            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.primary, AppColors.secondary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.08),
+                  AppColors.accent.withValues(alpha: 0.04),
+                  AppColors.background,
+                ],
+                stops: const [0.0, 0.3, 1.0],
               ),
-              borderRadius: BorderRadius.circular(16),
             ),
+          ),
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Total Points',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${user.totalPoints}',
-                  style: AppTextStyles.displaySmall.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.trending_up,
-                      size: 16,
-                      color: Colors.white,
+                // Premium header
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.85),
+                        AppColors.accent.withValues(alpha: 0.6),
+                      ],
+                      stops: const [0.0, 0.5, 1.0],
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '+$weeklyTotal minggu ini',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white.withOpacity(0.9),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.2),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
                       ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: TacoHeroHeader(
+                      title: 'Points & Rewards',
+                      subtitle: 'Track your point earnings',
                     ),
-                  ],
+                  ),
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Total points card
+                      Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.primary,
+                              AppColors.primary.withValues(alpha: 0.8),
+                              AppColors.secondary.withValues(alpha: 0.5),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.25),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Total Points',
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      user.totalPoints.toString(),
+                                      style: AppTextStyles.displayMedium.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.white.withValues(alpha: 0.2),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Icon(
+                                    Iconsax.award_copy,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Iconsax.trend_up_copy,
+                                    size: 16,
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '+$weeklyTotal this week',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: Colors.white.withValues(alpha: 0.8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Quick stats
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildQuickStat(
+                              'This Week',
+                              '$weeklyTotal',
+                              AppColors.success,
+                              Iconsax.calendar_1_copy,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildQuickStat(
+                              'This Month',
+                              '$monthlyTotal',
+                              AppColors.secondary,
+                              Iconsax.chart_copy,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Filter
+                      const SectionHeader(
+                        title: 'Transaction History',
+                        subtitle: 'Track your point earnings',
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 40,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: _filterOptions.map((filter) {
+                            final isSelected = _selectedFilter == filter;
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedFilter = filter;
+                                  });
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  padding:
+                                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    gradient: isSelected
+                                        ? LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              AppColors.primary,
+                                              AppColors.secondary,
+                                            ],
+                                          )
+                                        : null,
+                                    color: isSelected ? null : AppColors.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? Colors.transparent
+                                          : AppColors.border,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    filter,
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: isSelected
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Transactions or empty state
+                      if (filteredTransactions.isEmpty)
+                        const EmptyState(
+                          title: 'No transactions',
+                          subtitle: 'No point transactions for this period',
+                        )
+                      else
+                        Column(
+                          children: List.generate(
+                            filteredTransactions.length,
+                            (index) {
+                              final txn = filteredTransactions[index];
+                              final color = _getTransactionTypeColor(txn.type);
+                              final icon = _getTransactionTypeIcon(txn.type);
+                              final formattedTime = _formatTimeAgo(txn.timestamp);
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        AppColors.surface,
+                                        AppColors.surfaceVariant.withValues(alpha: 0.3),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: AppColors.border.withValues(alpha: 0.5),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.06),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 44,
+                                        height: 44,
+                                        decoration: BoxDecoration(
+                                          color: color.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: color.withValues(alpha: 0.2),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          icon,
+                                          color: color,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              txn.description,
+                                              style: AppTextStyles.labelMedium.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: color.withValues(alpha: 0.12),
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    _getTransactionTypeLabel(txn.type),
+                                                    style: AppTextStyles.caption.copyWith(
+                                                      color: color,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Text(
+                                                  formattedTime,
+                                                  style: AppTextStyles.caption.copyWith(
+                                                    color: AppColors.textTertiary,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: txn.amount > 0
+                                              ? AppColors.success.withValues(alpha: 0.15)
+                                              : AppColors.error.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: txn.amount > 0
+                                                ? AppColors.success.withValues(alpha: 0.2)
+                                                : AppColors.error.withValues(alpha: 0.2),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${txn.amount > 0 ? '+' : ''}${txn.amount}',
+                                          style: AppTextStyles.labelSmall.copyWith(
+                                            color: txn.amount > 0
+                                                ? AppColors.success
+                                                : AppColors.error,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 32),
+
+                      // Info section
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              AppColors.secondary.withValues(alpha: 0.08),
+                              AppColors.secondary.withValues(alpha: 0.03),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.secondary.withValues(alpha: 0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Iconsax.star_1_copy,
+                                  color: AppColors.secondary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'How to Get Points',
+                                  style: AppTextStyles.titleMedium.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            _buildInfoItem('Quality reports', '15-25 points'),
+                            const SizedBox(height: 10),
+                            _buildInfoItem('Daily streak', '10 points/day'),
+                            const SizedBox(height: 10),
+                            _buildInfoItem('Unlock badges', '15-50 points'),
+                            const SizedBox(height: 10),
+                            _buildInfoItem('Weekly achievement', 'bonus points'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '$weeklyTotal',
-                            style: AppTextStyles.headlineSmall.copyWith(
-                              color: AppColors.success,
-                            ),
-                          ),
-                          Text(
-                            'Minggu Ini',
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.secondary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '$monthlyTotal',
-                            style: AppTextStyles.headlineSmall.copyWith(
-                              color: AppColors.secondary,
-                            ),
-                          ),
-                          Text(
-                            'Bulan Ini',
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            '${_filteredTransactions.length}',
-                            style: AppTextStyles.headlineSmall.copyWith(
-                              color: AppColors.accent,
-                            ),
-                          ),
-                          Text(
-                            'Transaksi',
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChips() {
-    return SizedBox(
-      height: 40,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: _filterOptions.map((filter) {
-          final isSelected = _selectedFilter == filter;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(filter),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedFilter = selected ? filter : 'Semua';
-                  _filterTransactions();
-                });
-              },
-              backgroundColor: AppColors.surfaceVariant,
-              selectedColor: AppColors.primary.withOpacity(0.1),
-              labelStyle: AppTextStyles.bodySmall.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                  color: isSelected ? AppColors.primary : AppColors.border,
-                  width: 1,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildTransactionItem(PointTransaction transaction) {
-    final color = _getTransactionTypeColor(transaction.type);
-    final icon = _getTransactionTypeIcon(transaction.type);
-    final typeLabel = _getTransactionTypeLabel(transaction.type);
-    
-    final formattedTime = _formatTimeAgo(transaction.timestamp);
-
-    return TacoListItem(
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+  Widget _buildQuickStat(String label, String value, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withValues(alpha: 0.12),
+            color.withValues(alpha: 0.04),
+          ],
         ),
-        child: Icon(
-          icon,
-          color: color,
-          size: 20,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
+          width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      title: Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Text(
-              transaction.description,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: AppTextStyles.headlineSmall.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: transaction.amount > 0 
-                  ? AppColors.success.withOpacity(0.1)
-                  : AppColors.error.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  transaction.amount > 0 ? Icons.add : Icons.remove,
-                  size: 12,
-                  color: transaction.amount > 0 ? AppColors.success : AppColors.error,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${transaction.amount.abs()}',
-                  style: AppTextStyles.caption.copyWith(
-                    color: transaction.amount > 0 ? AppColors.success : AppColors.error,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
         ],
       ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 4),
-          Row(
+    );
+  }
+
+  Widget _buildInfoItem(String title, String value) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: AppColors.secondary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(
+            Iconsax.check_copy,
+            size: 14,
+            color: AppColors.secondary,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TacoBadge(
-                text: typeLabel,
-                backgroundColor: color.withOpacity(0.1),
-                textColor: color,
-              ),
-              const Spacer(),
               Text(
-                formattedTime,
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textTertiary,
+                title,
+                style: AppTextStyles.bodySmall.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                value,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ],
           ),
-        ],
-      ),
-      onTap: () {
-      },
+        ),
+      ],
     );
   }
 
@@ -456,110 +648,15 @@ class _PointsScreenState extends State<PointsScreen> {
     final difference = now.difference(timestamp);
 
     if (difference.inMinutes < 1) {
-      return 'Baru saja';
+      return 'Just now';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} menit lalu';
+      return '${difference.inMinutes}m';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours} jam lalu';
+      return '${difference.inHours}h';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} hari lalu';
-    } else if (difference.inDays < 30) {
-      return '${difference.inDays ~/ 7} minggu lalu';
+      return '${difference.inDays}d';
     } else {
-      return '${difference.inDays ~/ 30} bulan lalu';
+      return '${(difference.inDays / 7).floor()}w';
     }
-  }
-
-  Widget _buildInfoSection() {
-    return TacoCard(
-      backgroundColor: AppColors.infoLight,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Cara Mendapatkan Points',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '• Laporan berkualitas: 15-25 points\n'
-            '• Maintain daily streak: 10 points/hari\n'
-            '• Unlock badges: 15-50 points\n'
-            '• Weekly achievements: bonus points\n'
-            '• Referrals: 100 points/orang\n'
-            '• Special events: bonus points',
-            style: AppTextStyles.bodySmall,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Tingkatkan Kualitas Laporan',
-            style: AppTextStyles.titleSmall.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '• Deskripsi detail: +5 points\n'
-            '• Foto pendukung: +10 points\n'
-            '• Competitor signals: +15 points\n'
-            '• Voice reports: +5 points',
-            style: AppTextStyles.bodySmall,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Points & Rewards'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              // Show points info
-            },
-            icon: const Icon(Icons.info_outline),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPointsSummary(),
-            const SizedBox(height: 24),
-
-            const SectionHeader(
-              title: 'Riwayat Transaksi',
-              subtitle: 'Track your points earnings',
-            ),
-            const SizedBox(height: 16),
-            _buildFilterChips(),
-            const SizedBox(height: 24),
-
-            if (_filteredTransactions.isEmpty)
-              const EmptyState(
-                title: 'Tidak ada transaksi',
-                subtitle: 'Belum ada transaksi points untuk periode ini',
-              )
-            else
-              Column(
-                children: _filteredTransactions
-                    .map((transaction) => _buildTransactionItem(transaction))
-                    .toList(),
-              ),
-
-            const SizedBox(height: 32),
-            _buildInfoSection(),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
-    );
   }
 }

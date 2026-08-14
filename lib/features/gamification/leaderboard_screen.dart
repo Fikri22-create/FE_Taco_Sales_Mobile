@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:taco_sales_insight/data/mock_data.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:taco_sales_insight/core/state/app_state.dart';
 import 'package:taco_sales_insight/models/gamification.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
-import 'package:taco_sales_insight/shared/common_widgets.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -12,531 +13,611 @@ class LeaderboardScreen extends StatefulWidget {
   State<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  String _selectedLeaderboard = 'consistency'; // consistency or quality
-  int _currentUserRank = 3; // User rank in consistency leaderboard
-  
-  List<LeaderboardEntry> get _selectedList {
-    // In a real app, this would filter by leaderboard type
-    // For now, we'll use the same leaderboard for both types
-    return MockData.leaderboardEntries;
+class _LeaderboardScreenState extends State<LeaderboardScreen>
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  late AnimationController _cardAnimationController;
+  late Animation<double> _cardAnimation;
+  String _selectedTab = 'daily'; // daily, monthly, alltime
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+    
+    _cardAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _cardAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _cardAnimationController, curve: Curves.easeOutCubic),
+    );
+    _cardAnimationController.forward();
   }
-  
-  String get _leaderboardTitle {
-    return _selectedLeaderboard == 'consistency'
-        ? 'Konsistensi'
-        : 'Kualitas Insight';
+
+  void _onTabChanged() {
+    final tabLabels = ['daily', 'monthly', 'alltime'];
+    setState(() {
+      _selectedTab = tabLabels[_tabController.index];
+      _cardAnimationController.reset();
+      _cardAnimationController.forward();
+    });
   }
-  
-  String get _leaderboardDescription {
-    return _selectedLeaderboard == 'consistency'
-        ? 'Berdasarkan jumlah laporan yang dibuat'
-        : 'Berdasarkan kualitas dan nilai signal yang ditemukan';
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    _cardAnimationController.dispose();
+    super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
-    final selectedList = _selectedList;
-    final currentUser = selectedList.firstWhere(
-      (user) => user.isCurrentUser,
-      orElse: () => selectedList[2],
-    );
-    
+    final appState = context.watch<AppState>();
+    final leaderboard = appState.leaderboardByPoints;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Leaderboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              _showLeaderboardInfo(context);
-            },
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.background,
+              AppColors.background.withValues(alpha: 0.8),
+              Colors.white.withValues(alpha: 0.3),
+            ],
+            stops: const [0, 0.5, 1.0],
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TacoButton(
-                    text: 'Konsistensi',
-                    onPressed: () {
-                      setState(() {
-                        _selectedLeaderboard = 'consistency';
-                      });
-                    },
-                    type: _selectedLeaderboard == 'consistency'
-                        ? ButtonType.primary
-                        : ButtonType.outline,
-                    isFullWidth: true,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TacoButton(
-                    text: 'Kualitas',
-                    onPressed: () {
-                      setState(() {
-                        _selectedLeaderboard = 'quality';
-                      });
-                    },
-                    type: _selectedLeaderboard == 'quality'
-                        ? ButtonType.primary
-                        : ButtonType.outline,
-                    isFullWidth: true,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            TacoCard(
-              child: Column(
-                children: [
-                  Text(
-                    _leaderboardTitle,
-                    style: AppTextStyles.headlineMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _leaderboardDescription,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Update: Mingguan',
-                    style: AppTextStyles.caption,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Top 3
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 2nd Place
-                _buildTopThreeCard(selectedList[1], 2),
-                const SizedBox(width: 8),
-                
-                // 1st Place
-                _buildTopThreeCard(selectedList[0], 1, isFirst: true),
-                const SizedBox(width: 8),
-                
-                // 3rd Place
-                _buildTopThreeCard(selectedList[2], 3),
-              ],
-            ),
-            const SizedBox(height: 32),
-            
-            // User Position
-            TacoCard(
-              backgroundColor: AppColors.primary.withOpacity(0.1),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        currentUser.rank.toString(),
-                        style: AppTextStyles.titleMedium.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentUser.userName,
-                          style: AppTextStyles.titleMedium.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Anda',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            // Premium Header with Search Icon
+            SliverAppBar(
+              expandedHeight: 0,
+              floating: true,
+              pinned: true,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              toolbarHeight: 70,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.primary.withValues(alpha: 0.9),
+                        AppColors.secondary.withValues(alpha: 0.7),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        currentUser.points.toString(),
+                ),
+              ),
+              title: Transform.translate(
+                offset: const Offset(0, 5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Leaderboard',
+                      style: AppTextStyles.headlineMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Iconsax.search_normal_1,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Segmented Tab (Daily / Monthly / All Time)
+                  _buildSegmentedTab(),
+                  const SizedBox(height: 32),
+
+                  // Top 3 Podium
+                  if (leaderboard.length >= 3)
+                    _buildPodiumSection(leaderboard),
+                  const SizedBox(height: 32),
+
+                  // Full Leaderboard (4-10)
+                  if (leaderboard.length > 3) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(
+                        'Rank 4-10',
                         style: AppTextStyles.titleMedium.copyWith(
-                          color: AppColors.primary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      _buildRankChange(currentUser),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Full Leaderboard
-            const SectionHeader(
-              title: 'Full Leaderboard',
-              subtitle: 'Peringkat 4-10',
-            ),
-            const SizedBox(height: 12),
-            
-            Column(
-              children: selectedList.sublist(3).map((user) {
-                return _buildLeaderboardItem(user);
-              }).toList(),
-            ),
-            const SizedBox(height: 32),
-            
-            // Rewards
-            TacoCard(
-              backgroundColor: AppColors.successLight,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hadiah Leaderboard',
-                    style: AppTextStyles.titleSmall.copyWith(
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• Peringkat 1: 500 points + Gold Badge\n'
-                    '• Peringkat 2-3: 300 points + Silver Badge\n'
-                    '• Peringkat 4-10: 100 points + Bronze Badge\n'
-                    '• Weekly reset dengan rewards baru\n'
-                    '• Special recognition di profil',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            
-            // Tips
-            TacoCard(
-              backgroundColor: AppColors.infoLight,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tips Naik Peringkat',
-                    style: AppTextStyles.titleSmall.copyWith(
-                      fontWeight: FontWeight.w600,
+                    ...List.generate(
+                      leaderboard.sublist(3).length,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: AnimatedBuilder(
+                          animation: _cardAnimation,
+                          builder: (context, child) => Transform.translate(
+                            offset: Offset(0, 20 * (1 - _cardAnimation.value)),
+                            child: Opacity(
+                              opacity: _cardAnimation.value,
+                              child: child,
+                            ),
+                          ),
+                          child: _buildRankingCard(leaderboard[3 + index]),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• Konsisten lapor setiap hari\n'
-                    '• Gunakan voice untuk lebih cepat\n'
-                    '• Fokus pada signal berkualitas tinggi\n'
-                    '• Jawab pertanyaan klarifikasi AI\n'
-                    '• Aktif di semua fitur gamification',
-                    style: AppTextStyles.bodySmall,
-                  ),
-                ],
+                  ],
+                  const SizedBox(height: 24),
+                ]),
               ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
-  
-  Widget _buildTopThreeCard(LeaderboardEntry user, int rank, {bool isFirst = false}) {
-    Color rankColor;
-    double size;
-    double elevation;
-    
-    switch (rank) {
-      case 1:
-        rankColor = AppColors.gold;
-        size = 120;
-        elevation = 8;
-        break;
-      case 2:
-        rankColor = AppColors.silver;
-        size = 100;
-        elevation = 4;
-        break;
-      case 3:
-      default:
-        rankColor = AppColors.bronze;
-        size = 100;
-        elevation = 4;
-    }
-    
-    return Column(
-      children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: rankColor.withOpacity(0.1),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: rankColor,
-              width: isFirst ? 3 : 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: rankColor.withOpacity(0.3),
-                blurRadius: elevation,
-                offset: const Offset(0, 2),
-              ),
-            ],
+
+  Widget _buildSegmentedTab() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.border.withValues(alpha: 0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CircleAvatar(
-                radius: (size - 20) / 2,
-                backgroundImage: user.avatarUrl != null
-                    ? NetworkImage(user.avatarUrl!)
-                    : null,
-              ),
-              Positioned(
-                top: 8,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: rankColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '#$rank',
-                    style: AppTextStyles.caption.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildTabItem('Daily', _selectedTab == 'daily', () {
+            setState(() => _selectedTab = 'daily');
+            _tabController.animateTo(0);
+          }),
+          _buildTabItem('Monthly', _selectedTab == 'monthly', () {
+            setState(() => _selectedTab = 'monthly');
+            _tabController.animateTo(1);
+          }),
+          _buildTabItem('All Time', _selectedTab == 'alltime', () {
+            setState(() => _selectedTab = 'alltime');
+            _tabController.animateTo(2);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabItem(String label, bool isActive, VoidCallback onTap) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 280),
+          decoration: BoxDecoration(
+            gradient: isActive
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.secondary.withValues(alpha: 0.8),
+                    ],
+                  )
+                : null,
+            color: isActive ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                label,
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: isActive ? Colors.white : AppColors.textSecondary,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
                 ),
               ),
-            ],
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+      ),
+    );
+  }
+
+  Widget _buildPodiumSection(List<LeaderboardEntry> leaderboard) {
+    return Column(
+      children: [
         Text(
-          user.userName,
-          style: AppTextStyles.titleSmall.copyWith(
-            fontWeight: FontWeight.w600,
+          'Top 3 Winners',
+          style: AppTextStyles.titleMedium.copyWith(
+            fontWeight: FontWeight.w700,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
-        Text(
-          user.points.toString(),
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
+        const SizedBox(height: 28),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            // 2nd Place
+            _buildPodiumCard(leaderboard[1], 2),
+            const SizedBox(width: 12),
+            // 1st Place (Tallest)
+            _buildPodiumCard(leaderboard[0], 1, isFirst: true),
+            const SizedBox(width: 12),
+            // 3rd Place
+            _buildPodiumCard(leaderboard[2], 3),
+          ],
         ),
       ],
     );
   }
-  
-  Widget _buildLeaderboardItem(LeaderboardEntry user) {
-    final isCurrentUser = user.isCurrentUser;
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: TacoCard(
-        backgroundColor: isCurrentUser
-            ? AppColors.primary.withOpacity(0.05)
-            : AppColors.surface,
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isCurrentUser ? AppColors.primary : AppColors.surfaceVariant,
-                shape: BoxShape.circle,
+
+  Widget _buildPodiumCard(LeaderboardEntry user, int rank, {bool isFirst = false}) {
+    late Color medalColor;
+    late double avatarSize;
+    late String medalEmoji;
+
+    switch (rank) {
+      case 1:
+        medalColor = AppColors.gold;
+        avatarSize = 56;
+        medalEmoji = '👑';
+        break;
+      case 2:
+        medalColor = AppColors.silver;
+        avatarSize = 48;
+        medalEmoji = '🥈';
+        break;
+      case 3:
+        medalColor = AppColors.bronze;
+        avatarSize = 40;
+        medalEmoji = '🥉';
+        break;
+    }
+
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          // Medal/Crown
+          ScaleTransition(
+            scale: _cardAnimation,
+            child: Text(
+              medalEmoji,
+              style: const TextStyle(fontSize: 32),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Avatar with Glow Effect
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              // Glow effect
+              Container(
+                width: avatarSize + 20,
+                height: avatarSize + 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: medalColor.withValues(alpha: 0.3),
+                      blurRadius: 24,
+                      spreadRadius: 4,
+                    ),
+                  ],
+                ),
               ),
-              child: Center(
-                child: Text(
-                  user.rank.toString(),
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isCurrentUser ? Colors.white : AppColors.textPrimary,
-                    fontWeight: FontWeight.w700,
+              // Avatar Circle
+              Container(
+                width: avatarSize,
+                height: avatarSize,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primary,
+                      AppColors.secondary,
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.white,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: medalColor.withValues(alpha: 0.4),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    user.userName.substring(0, 1).toUpperCase(),
+                    style: AppTextStyles.headlineSmall.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Rank Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: medalColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: medalColor.withValues(alpha: 0.4),
+                width: 1.5,
+              ),
             ),
-            const SizedBox(width: 12),
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: user.avatarUrl != null
-                  ? NetworkImage(user.avatarUrl!)
-                  : null,
+            child: Text(
+              '#$rank',
+              style: AppTextStyles.labelLarge.copyWith(
+                color: medalColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.userName,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _buildRankChange(user),
+          ),
+          const SizedBox(height: 10),
+
+          // Name and Points Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  medalColor.withValues(alpha: 0.12),
+                  medalColor.withValues(alpha: 0.05),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  user.points.toString(),
-                  style: AppTextStyles.titleSmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: medalColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: medalColor.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-                if (isCurrentUser)
-                  Text(
-                    'Anda',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
               ],
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Text(
+                  user.userName,
+                  style: AppTextStyles.titleSmall.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Iconsax.star_1,
+                      size: 16,
+                      color: medalColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${user.points}',
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: medalColor,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
-  
-  Widget _buildRankChange(LeaderboardEntry user) {
-    // Since LeaderboardEntry doesn't have previousRank, we'll show a placeholder
-    // In a real app, this would be fetched from user data
-    const int rankChange = 1; // Placeholder: moved up 1 position
-    
-    if (rankChange > 0) {
-      return Row(
-        children: [
-          Icon(
-            Icons.arrow_upward,
-            size: 12,
-            color: AppColors.success,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            '+$rankChange',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.success,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      );
-    } else if (rankChange < 0) {
-      return Row(
-        children: [
-          Icon(
-            Icons.arrow_downward,
-            size: 12,
-            color: AppColors.error,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            rankChange.toString(),
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.error,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Text(
-        'No change',
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.textTertiary,
+
+  Widget _buildRankingCard(LeaderboardEntry user) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withValues(alpha: 0.08),
+            AppColors.secondary.withValues(alpha: 0.04),
+          ],
         ),
-      );
-    }
-  }
-  
-  void _showLeaderboardInfo(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Tentang Leaderboard'),
-          content: const SingleChildScrollView(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Rank Number Badge
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.15),
+                  AppColors.secondary.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '${user.rank}',
+                style: AppTextStyles.titleSmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+
+          // Avatar
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.6),
+                  AppColors.secondary.withValues(alpha: 0.4),
+                ],
+              ),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                user.userName.substring(0, 1).toUpperCase(),
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Name and Score
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Leaderboard menampilkan peringkat pengguna berdasarkan performa.',
-                  style: TextStyle(fontSize: 16),
+                  user.userName,
+                  style: AppTextStyles.titleSmall.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 4),
                 Text(
-                  'Konsistensi Leaderboard:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text('• Berdasarkan jumlah laporan harian\n'
-                     '• Mengukur kedisiplinan dan rutinitas\n'
-                     '• Peringkat diupdate setiap hari'),
-                SizedBox(height: 16),
-                Text(
-                  'Kualitas Leaderboard:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text('• Berdasarkan kualitas signal yang ditemukan\n'
-                     '• Mengukur akurasi dan nilai insight\n'
-                     '• Peringkat diupdate setiap minggu'),
-                SizedBox(height: 16),
-                Text(
-                  'Peringkat direset setiap minggu dengan rewards baru.',
-                  style: TextStyle(fontStyle: FontStyle.italic),
+                  'Score • ${user.averageScore.toStringAsFixed(1)}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
-          actions: [
-            TacoButton(
-              text: 'Mengerti',
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              isFullWidth: false,
+
+          // Points Display with Icon
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.accent.withValues(alpha: 0.15),
+                  AppColors.accent.withValues(alpha: 0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: AppColors.accent.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
-          ],
-        );
-      },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Iconsax.star_1,
+                  size: 16,
+                  color: AppColors.accent,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${user.points}',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

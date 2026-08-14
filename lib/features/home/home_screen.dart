@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:provider/provider.dart';
+import 'dart:async';
+import 'package:taco_sales_insight/core/state/app_state.dart';
 import 'package:taco_sales_insight/data/mock_data.dart';
-import 'package:taco_sales_insight/shared/app_colors.dart';
-import 'package:taco_sales_insight/shared/app_text_styles.dart';
-import 'package:taco_sales_insight/shared/common_widgets.dart';
 import 'package:taco_sales_insight/models/intel_card.dart';
 import 'package:taco_sales_insight/models/report.dart';
 import 'package:taco_sales_insight/models/user.dart';
+import 'package:taco_sales_insight/shared/app_colors.dart';
+import 'package:taco_sales_insight/shared/app_text_styles.dart';
+import 'package:taco_sales_insight/shared/common_widgets.dart';
+import 'package:taco_sales_insight/shared/report_detail_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,210 +20,387 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late User _currentUser;
-  late List<IntelCard> _intelCards;
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
-    _currentUser = MockData.currentUser;
-    _intelCards = MockData.intelCards;
-  }
-
-  void _refreshData() {
-    setState(() {
-      // In a real app, this would fetch new data
-      _intelCards = MockData.intelCards;
+    _timer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      setState(() {});
     });
   }
 
-  void _navigateToReport() {
-    Navigator.pushNamed(context, '/report/text-input',
-        arguments: MockData.outlets.first);
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refresh() {
+    return Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  void _openCreateReport() {
+    Navigator.pushNamed(context, '/report/select-outlet');
   }
 
   @override
   Widget build(BuildContext context) {
+    final appState = context.watch<AppState>();
+    final user = appState.user;
+    final reports = appState.reports;
+
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final reportsToday = reports
+        .where((report) => !report.createdAt.isBefore(todayStart))
+        .length;
+    final weekStart = now.subtract(const Duration(days: 7));
+    final weeklyPoints = appState.pointTransactions
+        .where((transaction) => !transaction.timestamp.isBefore(weekStart))
+        .fold<int>(0, (sum, transaction) => sum + transaction.amount);
+    final intelCards = _buildIntelCardsList(
+      user,
+      appState.unreadCount,
+      reportsToday,
+      weeklyPoints,
+    );
+
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _refreshData();
-          return Future.delayed(const Duration(milliseconds: 500));
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 16),
-
-              // Header with Greeting
-              _buildHeader(),
-              const SizedBox(height: 24),
-
-              // Quick Stats Row
-              _buildQuickStats(),
-              const SizedBox(height: 24),
-
-              // Intel Cards Grid
-              _buildIntelCardsGrid(),
-              const SizedBox(height: 24),
-
-              // Recent Activity
-              _buildRecentActivity(),
-              const SizedBox(height: 24),
-
-              // Performance Summary
-              _buildPerformanceSummary(),
-              const SizedBox(height: 32),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.background,
+              AppColors.background.withValues(alpha: 0.5),
+              Colors.white,
+              AppColors.primary.withValues(alpha: 0.02),
             ],
+            stops: const [0, 0.3, 0.7, 1.0],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToReport,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 40, 16, 100),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, user, appState.unreadCount),
+                const SizedBox(height: 24),
+                _buildHeroCard(user, weeklyPoints),
+                const SizedBox(height: 24),
+                _buildIntelCardsGrid(context, intelCards),
+                const SizedBox(height: 24),
+                _buildRecentActivity(context, reports),
+                const SizedBox(height: 24),
+                _buildPerformanceSummary(user),
+                const SizedBox(height: 24),
+                _buildCreateReportButton(),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
         ),
-        elevation: 4,
-        child: const Icon(Icons.add, size: 28),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    final time = DateTime.now().hour;
-    String greeting;
-    if (time < 12) {
-      greeting = 'Selamat Pagi';
-    } else if (time < 15) {
-      greeting = 'Selamat Siang';
-    } else if (time < 19) {
-      greeting = 'Selamat Sore';
-    } else {
-      greeting = 'Selamat Malam';
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '$greeting,',
-          style: AppTextStyles.titleLarge.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          _currentUser.name,
-          style: AppTextStyles.headlineMedium,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Sales Code: ${_currentUser.salesCode} | ${_currentUser.region}',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textTertiary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickStats() {
+  Widget _buildHeader(BuildContext context, User user, int unreadCount) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: TacoCard(
-            onTap: () => Navigator.pushNamed(context, '/profile/points'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Points',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: AppColors.textTertiary,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_currentUser.totalPoints}',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: AppColors.accent,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '+25 this week',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.success,
-                  ),
-                ),
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.secondary.withValues(alpha: 0.8),
               ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Center(
+            child: Text(
+              'T',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: -0.5,
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TacoCard(
-            onTap: () => Navigator.pushNamed(context, '/profile/streak'),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Streak',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 14,
-                      color: AppColors.textTertiary,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_currentUser.currentStreak} days',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: AppColors.streakActive,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Best: ${_currentUser.bestStreak} days',
-                  style: AppTextStyles.caption,
-                ),
-              ],
-            ),
-          ),
-        ),
+        _buildNotificationBell(context, unreadCount),
       ],
     );
   }
 
-  Widget _buildIntelCardsGrid() {
+  Widget _buildNotificationBell(BuildContext context, int unreadCount) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: AppColors.surfaceVariant,
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => Navigator.pushNamed(context, '/notifications'),
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Icon(
+                Iconsax.notification_copy,
+                size: 22,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ),
+        if (unreadCount > 0)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              constraints: const BoxConstraints(minWidth: 18),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(color: AppColors.surface, width: 1.5),
+              ),
+              child: Text(
+                '$unreadCount',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeroCard(User user, int weeklyPoints) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.secondary.withValues(alpha: 0.8),
+            AppColors.primary.withValues(alpha: 0.6),
+            AppColors.secondary.withValues(alpha: 0.4),
+          ],
+          stops: const [0, 0.3, 0.7, 1.0],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Points Balance',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${user.totalPoints}',
+                        style: AppTextStyles.displaySmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Iconsax.star_1_copy,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              height: 1,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.3),
+                    Colors.white.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'This Week',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '+$weeklyPoints',
+                        style: AppTextStyles.headlineSmall.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Active Streak',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${user.currentStreak} days',
+                        style: AppTextStyles.headlineSmall.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  List<IntelCard> _buildIntelCardsList(
+    User user,
+    int unreadCount,
+    int reportsToday,
+    int weeklyPoints,
+  ) {
+    return MockData.intelCards.map((card) {
+      String? value;
+      String? subtitle;
+      String? change;
+
+      switch (card.id) {
+        case 'card_001':
+          value = '$reportsToday';
+          break;
+        case 'card_002':
+          value = '${user.currentStreak}';
+          subtitle = '${user.currentStreak} consecutive days';
+          change = null;
+          break;
+        case 'card_003':
+          value = '$weeklyPoints';
+          break;
+        case 'card_004':
+          value = user.stats.averageReportQuality.toStringAsFixed(1);
+          change = null;
+          break;
+        case 'card_006':
+          value = '$unreadCount';
+          subtitle = unreadCount > 0
+              ? '$unreadCount new notifications'
+              : 'All notifications read';
+          break;
+      }
+
+      if (value == null) return card;
+
+      return IntelCard(
+        id: card.id,
+        title: card.title,
+        subtitle: subtitle ?? card.subtitle,
+        value: value,
+        change: change ?? card.change,
+        type: card.type,
+        trend: card.trend,
+        icon: card.icon,
+        colorScheme: card.colorScheme,
+        isInteractive: card.isInteractive,
+        actionRoute: card.actionRoute,
+        actionParams: card.actionParams,
+        timestamp: card.timestamp,
+        priority: card.priority,
+        tags: card.tags,
+        status: card.status,
+      );
+    }).toList();
+  }
+
+  Widget _buildIntelCardsGrid(BuildContext context, List<IntelCard> cards) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(
+        SectionHeader(
           title: 'Insights',
-          subtitle: 'Ringkasan aktivitas Anda',
+          subtitle: 'Your key metrics at a glance',
         ),
         const SizedBox(height: 16),
         GridView.count(
@@ -228,26 +410,32 @@ class _HomeScreenState extends State<HomeScreen> {
           childAspectRatio: 1.1,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          children: _intelCards
+          children: cards
               .where((card) =>
                   card.type != IntelCardType.quickAction &&
                   card.type != IntelCardType.notification)
-              .map((card) => _buildIntelCard(card))
+              .map((card) => _buildIntelCard(context, card))
               .toList(),
         ),
         const SizedBox(height: 16),
-
-        // Quick Action & Notification Cards
         Row(
           children: [
             Expanded(
-              child: _buildIntelCard(_intelCards
-                  .firstWhere((card) => card.type == IntelCardType.quickAction)),
+              child: _buildIntelCard(
+                context,
+                cards.firstWhere(
+                  (card) => card.type == IntelCardType.quickAction,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildIntelCard(_intelCards
-                  .firstWhere((card) => card.type == IntelCardType.notification)),
+              child: _buildIntelCard(
+                context,
+                cards.firstWhere(
+                  (card) => card.type == IntelCardType.notification,
+                ),
+              ),
             ),
           ],
         ),
@@ -255,11 +443,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildIntelCard(IntelCard card) {
+  Widget _buildIntelCard(BuildContext context, IntelCard card) {
     Color getCardColor(IntelCardColorScheme scheme) {
       switch (scheme) {
         case IntelCardColorScheme.blue:
-          return AppColors.chartBlue.withOpacity(0.1);
+          return AppColors.chartBlue.withValues(alpha: 0.1);
         case IntelCardColorScheme.green:
           return AppColors.successLight;
         case IntelCardColorScheme.yellow:
@@ -310,14 +498,41 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
+    IconData getCardIcon(String rawIcon) {
+      switch (rawIcon) {
+        case '📊':
+          return Iconsax.chart_copy;
+        case '🔥':
+          return Iconsax.flash_copy;
+        case '⭐':
+          return Iconsax.star_copy;
+        case '🎯':
+          return Iconsax.status_copy;
+        case '➕':
+          return Iconsax.add_copy;
+        case '🔔':
+          return Iconsax.notification_copy;
+        default:
+          return Iconsax.info_circle_copy;
+      }
+    }
+
+    final textColor = getTextColor(card.colorScheme);
+
     return TacoCard(
-      onTap: card.isInteractive ? () {
-        if (card.actionRoute != null) {
-          Navigator.pushNamed(context, card.actionRoute!);
-        }
-      } : null,
+      onTap: card.isInteractive
+          ? () {
+              if (card.actionRoute != null) {
+                Navigator.pushNamed(context, card.actionRoute!);
+              }
+            }
+          : null,
       backgroundColor: getCardColor(card.colorScheme),
       padding: const EdgeInsets.all(16),
+      borderSide: BorderSide(
+        color: textColor.withValues(alpha: 0.15),
+        width: 1,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -326,22 +541,39 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                card.icon,
-                style: const TextStyle(fontSize: 24),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: textColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: textColor.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  getCardIcon(card.icon),
+                  color: textColor,
+                  size: 20,
+                ),
               ),
               if (card.change != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: getTextColor(card.colorScheme).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    color: textColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: textColor.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     card.change!,
-                    style: AppTextStyles.caption.copyWith(
-                      color: getTextColor(card.colorScheme),
-                      fontWeight: FontWeight.w600,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: textColor,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
@@ -353,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 card.title,
                 style: AppTextStyles.titleSmall.copyWith(
-                  color: getTextColor(card.colorScheme),
+                  color: textColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -362,15 +594,19 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(
                   card.subtitle!,
                   style: AppTextStyles.caption.copyWith(
-                    color: getTextColor(card.colorScheme).withOpacity(0.7),
+                    color: textColor.withValues(alpha: 0.7),
+                    height: 1.3,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
               const SizedBox(height: 8),
               Text(
                 card.value,
                 style: AppTextStyles.headlineSmall.copyWith(
-                  color: getTextColor(card.colorScheme),
+                  color: textColor,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],
@@ -380,24 +616,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentActivity() {
-    final recentReports = MockData.reports.take(3).toList();
+  Widget _buildRecentActivity(BuildContext context, List<Report> reports) {
+    final recentReports = reports.take(3).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Aktivitas Terkini',
-          subtitle: 'Laporan Anda yang terbaru',
-          trailing: TacoBadge.info(text: '3 items'),
+          title: 'Recent Activity',
+          subtitle: 'Your latest reports and submissions',
+          trailing: TacoBadge.info(text: '${recentReports.length} Reports'),
         ),
         const SizedBox(height: 16),
         if (recentReports.isEmpty)
-          const EmptyState(
-            title: 'Belum ada laporan',
-            subtitle: 'Mulai dengan membuat laporan pertama Anda',
-            actionText: 'Buat Laporan',
-            onAction: null, // Will be handled by FAB
+          EmptyState(
+            title: 'No Reports Yet',
+            subtitle: 'Create your first report to get started',
+            actionText: 'Create Report',
+            onAction: () => Navigator.pushNamed(context, '/report/select-outlet'),
           )
         else
           Column(
@@ -407,14 +643,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Icon(
                       report.inputType == ReportInputType.voice
-                          ? Icons.mic
-                          : Icons.text_fields,
+                          ? Iconsax.microphone_copy
+                          : Iconsax.document_text_1_copy,
                       color: AppColors.primary,
                       size: 20,
                     ),
@@ -443,7 +679,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         TacoBadge(
-                          text: '${report.pointsEarned} points',
+                          text: '${report.pointsEarned} Points',
                           backgroundColor: AppColors.successLight,
                           textColor: AppColors.success,
                         ),
@@ -458,9 +694,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () {
-                  // Navigate to report detail
-                },
+                onTap: () => showReportDetailSheet(context, report),
               );
             }).toList(),
           ),
@@ -468,14 +702,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPerformanceSummary() {
+  Widget _buildPerformanceSummary(User user) {
+    final progressValue = user.stats.totalObjectives > 0
+        ? user.stats.completedObjectives / user.stats.totalObjectives
+        : 0.0;
+
     return TacoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SectionHeader(
-            title: 'Ringkasan Performa',
-            subtitle: 'Statistik minggu ini',
+          SectionHeader(
+            title: 'Performance Summary',
+            subtitle: 'Your weekly performance overview',
           ),
           const SizedBox(height: 16),
           Row(
@@ -484,13 +722,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      '${_currentUser.stats.reportsThisWeek}',
+                      '${user.stats.reportsThisWeek}',
                       style: AppTextStyles.headlineSmall.copyWith(
                         color: AppColors.primary,
                       ),
                     ),
                     Text(
-                      'Laporan',
+                      'Reports',
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -500,13 +738,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      '${_currentUser.stats.averageReportQuality.toStringAsFixed(1)}',
+                      user.stats.averageReportQuality.toStringAsFixed(1),
                       style: AppTextStyles.headlineSmall.copyWith(
                         color: AppColors.success,
                       ),
                     ),
                     Text(
-                      'Rata-rata Kualitas',
+                      'Average Quality',
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -516,13 +754,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   children: [
                     Text(
-                      '${_currentUser.stats.dailyProductivity.toStringAsFixed(0)}%',
+                      '${user.stats.dailyProductivity.toStringAsFixed(0)}%',
                       style: AppTextStyles.headlineSmall.copyWith(
                         color: AppColors.secondary,
                       ),
                     ),
                     Text(
-                      'Produktivitas',
+                      'Productivity',
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -532,8 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
           ProgressBar(
-            value: _currentUser.stats.completedObjectives /
-                _currentUser.stats.totalObjectives,
+            value: progressValue,
             backgroundColor: AppColors.surfaceVariant,
             progressColor: AppColors.primary,
             height: 8,
@@ -543,11 +780,11 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Objectives',
+                'Objective Progress',
                 style: AppTextStyles.bodySmall,
               ),
               Text(
-                '${_currentUser.stats.completedObjectives}/${_currentUser.stats.totalObjectives}',
+                '${user.stats.completedObjectives}/${user.stats.totalObjectives}',
                 style: AppTextStyles.bodySmall.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
@@ -556,6 +793,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCreateReportButton() {
+    return TacoButton(
+      text: 'Create Report',
+      size: ButtonSize.large,
+      icon: const Icon(
+        Iconsax.add_copy,
+        size: 18,
+        color: Colors.white,
+      ),
+      onPressed: _openCreateReport,
     );
   }
 }

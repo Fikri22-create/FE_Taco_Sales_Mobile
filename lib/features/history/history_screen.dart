@@ -9,7 +9,9 @@ import 'package:taco_sales_insight/shared/common_widgets.dart';
 import 'package:taco_sales_insight/shared/report_detail_sheet.dart';
 
 class HistoryScreen extends StatefulWidget {
-  const HistoryScreen({super.key});
+  const HistoryScreen({super.key, this.onCreateReport});
+
+  final VoidCallback? onCreateReport;
 
   @override
   State<HistoryScreen> createState() => _HistoryScreenState();
@@ -17,13 +19,13 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final List<String> _filterKeys = [
-    'All',
-    'Last 7 Days',
-    'This Month',
-    'Voice',
-    'Text',
+    'Semua',
+    '7 Hari Terakhir',
+    'Bulan Ini',
+    'Suara',
+    'Teks',
   ];
-  String _selectedFilterKey = 'All';
+  String _selectedFilterKey = 'Semua';
   String _searchQuery = '';
   bool _isLoading = false;
   String? _errorMessage;
@@ -41,20 +43,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
       }
 
       switch (_selectedFilterKey) {
-        case 'Last 7 Days':
+        case '7 Hari Terakhir':
           final weekAgo = now.subtract(const Duration(days: 7));
           if (report.createdAt.isBefore(weekAgo)) return false;
           break;
-        case 'This Month':
+        case 'Bulan Ini':
           if (report.createdAt.year != now.year ||
               report.createdAt.month != now.month) {
             return false;
           }
           break;
-        case 'Voice':
+        case 'Suara':
           if (report.inputType != ReportInputType.voice) return false;
           break;
-        case 'Text':
+        case 'Teks':
           if (report.inputType != ReportInputType.text) return false;
           break;
       }
@@ -70,7 +72,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
 
     try {
-      // Simulasi proses muat ulang data dari AppState.
       await Future.delayed(const Duration(milliseconds: 800));
     } catch (_) {
       if (!mounted) return;
@@ -95,16 +96,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     switch (report.confidence) {
       case ReportConfidence.veryHigh:
         color = AppColors.success;
-        text = 'Very High';
+        text = 'Sangat Tinggi';
       case ReportConfidence.high:
         color = AppColors.success;
-        text = 'High';
+        text = 'Tinggi';
       case ReportConfidence.medium:
         color = AppColors.warning;
-        text = 'Medium';
+        text = 'Sedang';
       case ReportConfidence.low:
         color = AppColors.error;
-        text = 'Low';
+        text = 'Rendah';
     }
 
     return Container(
@@ -156,14 +157,17 @@ class _HistoryScreenState extends State<HistoryScreen> {
               child: Column(
                 children: [
                   TacoTextField(
-                    label: 'Search',
-                    hintText: 'Find reports by outlet name or content',
+                    label: 'Cari',
+                    hintText: 'Cari laporan berdasarkan nama outlet atau isi',
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value;
                       });
                     },
-                    prefixIcon: const Icon(Iconsax.search_normal_1_copy, size: 20),
+                    prefixIcon: const Icon(
+                      Iconsax.search_normal_1_copy,
+                      size: 20,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -181,11 +185,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   ? LinearGradient(
                                       colors: [
                                         AppColors.primary,
-                                        AppColors.secondary.withValues(alpha: 0.8),
+                                        AppColors.secondary.withValues(
+                                          alpha: 0.8,
+                                        ),
                                       ],
                                     )
                                   : null,
-                              color: isSelected ? null : AppColors.surfaceVariant,
+                              color: isSelected
+                                  ? null
+                                  : AppColors.surfaceVariant,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected
@@ -196,7 +204,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.2),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.2,
+                                        ),
                                         blurRadius: 12,
                                         offset: const Offset(0, 4),
                                       ),
@@ -239,9 +249,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ],
               ),
             ),
-            Expanded(
-              child: _buildBody(filteredReports, isOffline),
-            ),
+            Expanded(child: _buildBody(filteredReports, isOffline)),
           ],
         ),
       ),
@@ -249,55 +257,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Widget _buildHeader(BuildContext context, int reportCount) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.secondary.withValues(alpha: 0.7),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'History',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '$reportCount Reports',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-            IconButton(
-              onPressed: _refreshData,
-              icon: const Icon(Iconsax.refresh_copy, color: Colors.white),
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.white.withValues(alpha: 0.15),
-              ),
-            ),
-          ],
+    return TacoPremiumHeader(
+      title: 'Riwayat Laporan',
+      subtitle: '$reportCount Laporan',
+      showBackButton: Navigator.canPop(context),
+      trailing: IconButton(
+        onPressed: _refreshData,
+        icon: const Icon(Iconsax.refresh_copy, color: Colors.white),
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.white.withValues(alpha: 0.15),
         ),
       ),
     );
@@ -305,35 +273,39 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   Widget _buildBody(List<Report> filteredReports, bool isOffline) {
     if (_isLoading) {
-      return LoadingIndicator(message: 'Loading reports...');
+      return LoadingIndicator(message: 'Memuat laporan...');
     }
 
     if (_errorMessage != null) {
       return ErrorState(
-        title: 'Error loading reports',
+        title: 'Gagal memuat laporan',
         subtitle: _errorMessage,
-        retryText: 'Retry',
+        retryText: 'Coba Lagi',
         onRetry: _refreshData,
       );
     }
 
     if (isOffline) {
       return OfflineState(
-        subtitle: 'You are offline',
-        retryText: 'Retry',
+        subtitle: 'Anda sedang offline',
+        retryText: 'Coba Lagi',
         onRetry: _refreshData,
       );
     }
 
     if (filteredReports.isEmpty) {
       return EmptyState(
-        title: 'No Reports',
+        title: 'Belum Ada Laporan',
         subtitle: _searchQuery.isNotEmpty
-            ? 'No reports found matching your search'
-            : 'No reports available',
-        actionText: 'Create Report',
+            ? 'Tidak ada laporan yang cocok dengan pencarian Anda'
+            : 'Belum ada laporan',
+        actionText: 'Buat Laporan',
         onAction: () {
-          Navigator.pushNamed(context, '/report/select-outlet');
+          if (widget.onCreateReport != null) {
+            widget.onCreateReport!();
+          } else {
+            Navigator.pushNamed(context, '/report/select-outlet');
+          }
         },
       );
     }
@@ -387,13 +359,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                   colors: isVoice
                                       ? [
                                           AppColors.secondary,
-                                          AppColors.secondary
-                                              .withValues(alpha: 0.7),
+                                          AppColors.secondary.withValues(
+                                            alpha: 0.7,
+                                          ),
                                         ]
                                       : [
                                           AppColors.primary,
-                                          AppColors.primary
-                                              .withValues(alpha: 0.7),
+                                          AppColors.primary.withValues(
+                                            alpha: 0.7,
+                                          ),
                                         ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
@@ -403,10 +377,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: (isVoice
-                                            ? AppColors.secondary
-                                            : AppColors.primary)
-                                        .withValues(alpha: 0.15),
+                                    color:
+                                        (isVoice
+                                                ? AppColors.secondary
+                                                : AppColors.primary)
+                                            .withValues(alpha: 0.15),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),

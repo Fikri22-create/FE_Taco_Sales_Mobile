@@ -15,7 +15,7 @@ class AppNotification {
   final String? senderId;
   final String? senderName;
   final List<String> tags;
-  final String? actionData; // New field for action data
+  final String? actionData;
 
   AppNotification({
     required this.id,
@@ -132,9 +132,7 @@ class AppNotificationSummary {
       'totalNotifications': totalNotifications,
       'unreadCount': unreadCount,
       'latestNotification': latestNotification?.toJson(),
-      'countsByType': countsByType.map(
-        (k, v) => MapEntry(k.name, v),
-      ),
+      'countsByType': countsByType.map((k, v) => MapEntry(k.name, v)),
       'lastChecked': lastChecked.toIso8601String(),
     };
   }
@@ -155,12 +153,7 @@ enum NotificationType {
   actionData,
 }
 
-enum NotificationPriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum NotificationPriority { low, medium, high, critical }
 
 class AppNotificationPreferences {
   final bool receiveReportNotifications;

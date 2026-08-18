@@ -13,7 +13,9 @@ import 'package:taco_sales_insight/shared/common_widgets.dart';
 import 'package:taco_sales_insight/shared/report_detail_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onCreateReport});
+
+  final VoidCallback? onCreateReport;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -41,7 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openCreateReport() {
-    Navigator.pushNamed(context, '/report/select-outlet');
+    if (widget.onCreateReport != null) {
+      widget.onCreateReport!();
+    } else {
+      Navigator.pushNamed(context, '/report/select-outlet');
+    }
   }
 
   @override
@@ -112,30 +118,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.primary,
-                AppColors.secondary.withValues(alpha: 0.8),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: Text(
-              'T',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: -0.5,
-              ),
-            ),
+        Image.asset('assets/images/taco_logo.png', width: 40, height: 40),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: SizedBox.shrink(),
           ),
         ),
         _buildNotificationBell(context, unreadCount),
@@ -236,7 +223,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Points Balance',
+                        'Saldo Poin',
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
@@ -292,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'This Week',
+                        'Minggu Ini',
                         style: AppTextStyles.caption.copyWith(
                           color: Colors.white.withValues(alpha: 0.7),
                         ),
@@ -312,7 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Active Streak',
+                        'Streak Aktif',
                         style: AppTextStyles.caption.copyWith(
                           color: Colors.white.withValues(alpha: 0.7),
                         ),
@@ -335,7 +322,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   List<IntelCard> _buildIntelCardsList(
     User user,
     int unreadCount,
@@ -353,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
           break;
         case 'card_002':
           value = '${user.currentStreak}';
-          subtitle = '${user.currentStreak} consecutive days';
+          subtitle = '${user.currentStreak} hari berturut-turut';
           change = null;
           break;
         case 'card_003':
@@ -366,8 +352,8 @@ class _HomeScreenState extends State<HomeScreen> {
         case 'card_006':
           value = '$unreadCount';
           subtitle = unreadCount > 0
-              ? '$unreadCount new notifications'
-              : 'All notifications read';
+              ? '$unreadCount notifikasi baru'
+              : 'Semua notifikasi sudah dibaca';
           break;
       }
 
@@ -399,8 +385,8 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Insights',
-          subtitle: 'Your key metrics at a glance',
+          title: 'Wawasan',
+          subtitle: 'Ringkasan metrik utama Anda',
         ),
         const SizedBox(height: 16),
         GridView.count(
@@ -411,9 +397,11 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           children: cards
-              .where((card) =>
-                  card.type != IntelCardType.quickAction &&
-                  card.type != IntelCardType.notification)
+              .where(
+                (card) =>
+                    card.type != IntelCardType.quickAction &&
+                    card.type != IntelCardType.notification,
+              )
               .map((card) => _buildIntelCard(context, card))
               .toList(),
         ),
@@ -522,7 +510,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return TacoCard(
       onTap: card.isInteractive
           ? () {
-              if (card.actionRoute != null) {
+              if (card.type == IntelCardType.quickAction) {
+                _openCreateReport();
+              } else if (card.actionRoute != null) {
                 Navigator.pushNamed(context, card.actionRoute!);
               }
             }
@@ -552,15 +542,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 1,
                   ),
                 ),
-                child: Icon(
-                  getCardIcon(card.icon),
-                  color: textColor,
-                  size: 20,
-                ),
+                child: Icon(getCardIcon(card.icon), color: textColor, size: 20),
               ),
               if (card.change != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: textColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
@@ -623,17 +612,17 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SectionHeader(
-          title: 'Recent Activity',
-          subtitle: 'Your latest reports and submissions',
-          trailing: TacoBadge.info(text: '${recentReports.length} Reports'),
+          title: 'Aktivitas Terbaru',
+          subtitle: 'Laporan dan kiriman terbaru Anda',
+          trailing: TacoBadge.info(text: '${recentReports.length} Laporan'),
         ),
         const SizedBox(height: 16),
         if (recentReports.isEmpty)
           EmptyState(
-            title: 'No Reports Yet',
-            subtitle: 'Create your first report to get started',
-            actionText: 'Create Report',
-            onAction: () => Navigator.pushNamed(context, '/report/select-outlet'),
+            title: 'Belum Ada Laporan',
+            subtitle: 'Buat laporan pertama Anda untuk memulai',
+            actionText: 'Buat Laporan',
+            onAction: _openCreateReport,
           )
         else
           Column(
@@ -679,7 +668,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Row(
                       children: [
                         TacoBadge(
-                          text: '${report.pointsEarned} Points',
+                          text: '${report.pointsEarned} Poin',
                           backgroundColor: AppColors.successLight,
                           textColor: AppColors.success,
                         ),
@@ -712,8 +701,8 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeader(
-            title: 'Performance Summary',
-            subtitle: 'Your weekly performance overview',
+            title: 'Ringkasan Performa',
+            subtitle: 'Ringkasan performa mingguan Anda',
           ),
           const SizedBox(height: 16),
           Row(
@@ -727,10 +716,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: AppColors.primary,
                       ),
                     ),
-                    Text(
-                      'Reports',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Laporan', style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -743,10 +729,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: AppColors.success,
                       ),
                     ),
-                    Text(
-                      'Average Quality',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Kualitas Rata-rata', style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -759,10 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: AppColors.secondary,
                       ),
                     ),
-                    Text(
-                      'Productivity',
-                      style: AppTextStyles.caption,
-                    ),
+                    Text('Produktivitas', style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -779,10 +759,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Objective Progress',
-                style: AppTextStyles.bodySmall,
-              ),
+              Text('Progres Target', style: AppTextStyles.bodySmall),
               Text(
                 '${user.stats.completedObjectives}/${user.stats.totalObjectives}',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -798,13 +775,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCreateReportButton() {
     return TacoButton(
-      text: 'Create Report',
+      text: 'Buat Laporan',
       size: ButtonSize.large,
-      icon: const Icon(
-        Iconsax.add_copy,
-        size: 18,
-        color: Colors.white,
-      ),
+      icon: const Icon(Iconsax.add_copy, size: 18, color: Colors.white),
       onPressed: _openCreateReport,
     );
   }

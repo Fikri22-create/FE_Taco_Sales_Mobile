@@ -5,6 +5,7 @@ import 'package:taco_sales_insight/core/state/app_state.dart';
 import 'package:taco_sales_insight/models/gamification.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
+import 'package:taco_sales_insight/shared/common_widgets.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -18,20 +19,23 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   late TabController _tabController;
   late AnimationController _cardAnimationController;
   late Animation<double> _cardAnimation;
-  String _selectedTab = 'daily'; // daily, monthly, alltime
+  String _selectedTab = 'daily';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
-    
+
     _cardAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     _cardAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _cardAnimationController, curve: Curves.easeOutCubic),
+      CurvedAnimation(
+        parent: _cardAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
     );
     _cardAnimationController.forward();
   }
@@ -74,59 +78,27 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         ),
         child: CustomScrollView(
           slivers: [
-            // Premium Header with Search Icon
-            SliverAppBar(
-              expandedHeight: 0,
-              floating: true,
-              pinned: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              toolbarHeight: 70,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
+            SliverToBoxAdapter(
+              child: TacoPremiumHeader(
+                title: 'Leaderboard',
+                subtitle: 'Bandingkan peringkat Anda dengan rekan',
+                showBackButton: Navigator.canPop(context),
+                trailing: Container(
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.primary,
-                        AppColors.primary.withValues(alpha: 0.9),
-                        AppColors.secondary.withValues(alpha: 0.7),
-                      ],
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1,
                     ),
                   ),
-                ),
-              ),
-              title: Transform.translate(
-                offset: const Offset(0, 5),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Leaderboard',
-                      style: AppTextStyles.headlineMedium.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: Icon(
-                        Iconsax.search_normal_1,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ],
+                  child: Icon(
+                    Iconsax.search_normal_1,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
               ),
             ),
@@ -135,21 +107,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // Segmented Tab (Daily / Monthly / All Time)
                   _buildSegmentedTab(),
                   const SizedBox(height: 32),
-
-                  // Top 3 Podium
-                  if (leaderboard.length >= 3)
-                    _buildPodiumSection(leaderboard),
+                  if (leaderboard.length >= 3) _buildPodiumSection(leaderboard),
                   const SizedBox(height: 32),
-
-                  // Full Leaderboard (4-10)
                   if (leaderboard.length > 3) ...[
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
                       child: Text(
-                        'Rank 4-10',
+                        'Peringkat 4-10',
                         style: AppTextStyles.titleMedium.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -202,15 +168,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       ),
       child: Row(
         children: [
-          _buildTabItem('Daily', _selectedTab == 'daily', () {
+          _buildTabItem('Harian', _selectedTab == 'daily', () {
             setState(() => _selectedTab = 'daily');
             _tabController.animateTo(0);
           }),
-          _buildTabItem('Monthly', _selectedTab == 'monthly', () {
+          _buildTabItem('Bulanan', _selectedTab == 'monthly', () {
             setState(() => _selectedTab = 'monthly');
             _tabController.animateTo(1);
           }),
-          _buildTabItem('All Time', _selectedTab == 'alltime', () {
+          _buildTabItem('Sepanjang Masa', _selectedTab == 'alltime', () {
             setState(() => _selectedTab = 'alltime');
             _tabController.animateTo(2);
           }),
@@ -257,10 +223,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   Widget _buildPodiumSection(List<LeaderboardEntry> leaderboard) {
+    if (leaderboard.length < 3) {
+      return SizedBox.shrink();
+    }
+
     return Column(
       children: [
         Text(
-          'Top 3 Winners',
+          '3 Pemenang Teratas',
           style: AppTextStyles.titleMedium.copyWith(
             fontWeight: FontWeight.w700,
           ),
@@ -270,13 +240,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            // 2nd Place
             _buildPodiumCard(leaderboard[1], 2),
             const SizedBox(width: 12),
-            // 1st Place (Tallest)
             _buildPodiumCard(leaderboard[0], 1, isFirst: true),
             const SizedBox(width: 12),
-            // 3rd Place
             _buildPodiumCard(leaderboard[2], 3),
           ],
         ),
@@ -284,7 +251,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     );
   }
 
-  Widget _buildPodiumCard(LeaderboardEntry user, int rank, {bool isFirst = false}) {
+  Widget _buildPodiumCard(
+    LeaderboardEntry user,
+    int rank, {
+    bool isFirst = false,
+  }) {
     late Color medalColor;
     late double avatarSize;
     late String medalEmoji;
@@ -311,21 +282,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Medal/Crown
           ScaleTransition(
             scale: _cardAnimation,
-            child: Text(
-              medalEmoji,
-              style: const TextStyle(fontSize: 32),
-            ),
+            child: Text(medalEmoji, style: const TextStyle(fontSize: 32)),
           ),
           const SizedBox(height: 12),
-
-          // Avatar with Glow Effect
           Stack(
             alignment: Alignment.center,
             children: [
-              // Glow effect
               Container(
                 width: avatarSize + 20,
                 height: avatarSize + 20,
@@ -340,7 +304,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   ],
                 ),
               ),
-              // Avatar Circle
               Container(
                 width: avatarSize,
                 height: avatarSize,
@@ -349,15 +312,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.secondary,
-                    ],
+                    colors: [AppColors.primary, AppColors.secondary],
                   ),
-                  border: Border.all(
-                    color: Colors.white,
-                    width: 3,
-                  ),
+                  border: Border.all(color: Colors.white, width: 3),
                   boxShadow: [
                     BoxShadow(
                       color: medalColor.withValues(alpha: 0.4),
@@ -380,7 +337,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           const SizedBox(height: 12),
 
-          // Rank Badge
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
@@ -401,7 +357,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           const SizedBox(height: 10),
 
-          // Name and Points Card
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
             decoration: BoxDecoration(
@@ -442,11 +397,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Iconsax.star_1,
-                      size: 16,
-                      color: medalColor,
-                    ),
+                    Icon(Iconsax.star_1, size: 16, color: medalColor),
                     const SizedBox(width: 4),
                     Text(
                       '${user.points}',
@@ -492,7 +443,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
       ),
       child: Row(
         children: [
-          // Rank Number Badge
           Container(
             width: 44,
             height: 44,
@@ -523,7 +473,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           const SizedBox(width: 14),
 
-          // Avatar
           Container(
             width: 40,
             height: 40,
@@ -554,7 +503,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           const SizedBox(width: 12),
 
-          // Name and Score
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -570,7 +518,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Score • ${user.averageScore.toStringAsFixed(1)}',
+                  'Skor • ${user.averageScore.toStringAsFixed(1)}',
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -579,7 +527,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             ),
           ),
 
-          // Points Display with Icon
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
@@ -600,11 +547,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Iconsax.star_1,
-                  size: 16,
-                  color: AppColors.accent,
-                ),
+                Icon(Iconsax.star_1, size: 16, color: AppColors.accent),
                 const SizedBox(width: 4),
                 Text(
                   '${user.points}',

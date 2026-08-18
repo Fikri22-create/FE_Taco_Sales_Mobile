@@ -53,7 +53,6 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
       _cancelled = false;
     });
 
-    // Step-by-step progress animation
     _timer = Timer.periodic(const Duration(milliseconds: 650), (timer) {
       if (!mounted || _cancelled) return;
       if (_currentStep < _steps.length - 1) {
@@ -96,7 +95,10 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   void _cancel() {
     _cancelled = true;
     _timer?.cancel();
-    Navigator.popUntil(context, (route) => route.settings.name == '/report/input-mode');
+    Navigator.popUntil(
+      context,
+      (route) => route.settings.name == '/report/input-mode',
+    );
   }
 
   @override
@@ -108,213 +110,247 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: _status == _ProcessingStatus.error
-            ? ErrorState(
-                title: 'Gagal Memproses Laporan',
-                subtitle: _errorMessage,
-                retryText: 'Coba Lagi',
-                onRetry: _startProcessing,
-              )
-            : Stack(
-                children: [
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Premium AI Processing Indicator
-                          Container(
-                            width: 90,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.primaryLight,
-                                  AppColors.primaryLight.withValues(alpha: 0.5),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(22),
-                              border: Border.all(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                width: 1.5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.15),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3.5,
-                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 36),
+      body: Column(
+        children: [
+          TacoPremiumHeader(
+            title: 'Pemrosesan Laporan',
+            subtitle: 'AI sedang menganalisis laporan Anda',
+            showBackButton: false,
+          ),
 
-                          Text(
-                            'AI Sedang Memproses',
-                            style: AppTextStyles.headlineMedium.copyWith(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'Harap tunggu sebentar, NLP engine sedang menganalisis sinyal pasar dari laporan Anda.',
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.textSecondary,
-                              height: 1.5,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 48),
-
-                          // Premium Step Indicators
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.surface,
-                                  AppColors.surfaceVariant.withValues(alpha: 0.3),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: AppColors.border.withValues(alpha: 0.8),
-                                width: 1.2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.05),
-                                  blurRadius: 16,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: List.generate(_steps.length, (index) {
-                                final isDone = index < _currentStep;
-                                final isActive = index == _currentStep;
-
-                                Color iconColor = AppColors.textDisabled;
-                                IconData iconData = Iconsax.minus;
-
-                                if (isDone) {
-                                  iconColor = AppColors.success;
-                                  iconData = Iconsax.tick_circle;
-                                } else if (isActive) {
-                                  iconColor = AppColors.secondary;
-                                  iconData = Iconsax.refresh;
-                                }
-
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: Row(
-                                    children: [
-                                      SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: isActive
-                                            ? _SpinningIcon(
-                                                icon: iconData,
-                                                color: iconColor,
-                                                size: 24,
-                                              )
-                                            : Icon(iconData, color: iconColor, size: 24),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: Text(
-                                          _steps[index],
-                                          style: AppTextStyles.bodyMedium.copyWith(
-                                            color: isActive
-                                                ? AppColors.textPrimary
-                                                : (isDone ? AppColors.textSecondary : AppColors.textDisabled),
-                                            fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                                          ),
-                                        ),
+          Expanded(
+            child: _status == _ProcessingStatus.error
+                ? ErrorState(
+                    title: 'Gagal Memproses Laporan',
+                    subtitle: _errorMessage,
+                    retryText: 'Coba Lagi',
+                    onRetry: _startProcessing,
+                  )
+                : Stack(
+                    children: [
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppColors.primaryLight,
+                                      AppColors.primaryLight.withValues(
+                                        alpha: 0.5,
                                       ),
                                     ],
                                   ),
-                                );
-                              }),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Cancel affordance (top-right corner)
-                  Positioned(
-                    top: 8,
-                    right: 16,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.border,
-                          width: 1,
-                        ),
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _cancel,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Iconsax.close_circle,
-                                  size: 16,
-                                  color: AppColors.textSecondary,
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Batalkan',
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 40,
+                                    height: 40,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.primary,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
+                              const SizedBox(height: 36),
+
+                              Text(
+                                'AI Sedang Memproses Laporan',
+                                style: AppTextStyles.headlineMedium.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Harap tunggu sebentar, NLP engine sedang menganalisis sinyal pasar dari laporan Anda.',
+                                style: AppTextStyles.bodyLarge.copyWith(
+                                  color: AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 48),
+
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppColors.surface,
+                                      AppColors.surfaceVariant.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppColors.border.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  children: List.generate(_steps.length, (
+                                    index,
+                                  ) {
+                                    final isDone = index < _currentStep;
+                                    final isActive = index == _currentStep;
+
+                                    Color iconColor = AppColors.textDisabled;
+                                    IconData iconData = Iconsax.minus;
+
+                                    if (isDone) {
+                                      iconColor = AppColors.success;
+                                      iconData = Iconsax.tick_circle;
+                                    } else if (isActive) {
+                                      iconColor = AppColors.secondary;
+                                      iconData = Iconsax.refresh;
+                                    }
+
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 14,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 24,
+                                            height: 24,
+                                            child: isActive
+                                                ? _SpinningIcon(
+                                                    icon: iconData,
+                                                    color: iconColor,
+                                                    size: 24,
+                                                  )
+                                                : Icon(
+                                                    iconData,
+                                                    color: iconColor,
+                                                    size: 24,
+                                                  ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Text(
+                                              _steps[index],
+                                              style: AppTextStyles.bodyMedium
+                                                  .copyWith(
+                                                    color: isActive
+                                                        ? AppColors.textPrimary
+                                                        : (isDone
+                                                              ? AppColors
+                                                                    .textSecondary
+                                                              : AppColors
+                                                                    .textDisabled),
+                                                    fontWeight: isActive
+                                                        ? FontWeight.w700
+                                                        : FontWeight.w600,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 16,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceVariant,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.border,
+                              width: 1,
+                            ),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _cancel,
+                              borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Iconsax.close_circle,
+                                      size: 16,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Batalkan',
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Continuously spins the active step's refresh glyph so the current
-/// step reads as "in progress" without touching any processing logic.
 class _SpinningIcon extends StatefulWidget {
   final IconData icon;
   final Color color;
@@ -363,7 +399,8 @@ class ProcessingScreenWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final args =
+        ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     return ProcessingScreen(
       outlet: args['outlet'] as Outlet,
       inputMode: args['inputMode'] as String,

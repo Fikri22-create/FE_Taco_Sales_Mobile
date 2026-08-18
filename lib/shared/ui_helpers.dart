@@ -32,8 +32,18 @@ class UIHelpers {
 
   static String formatDate(DateTime dateTime) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dateTime.day} ${months[dateTime.month - 1]} ${dateTime.year}';
   }

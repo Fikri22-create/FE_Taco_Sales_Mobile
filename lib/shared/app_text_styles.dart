@@ -1,16 +1,7 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
-/// TACO Sales Insight type system.
-///
-/// Inter variable font, sized on a 4px scale with tight professional
-/// tracking. Display & headline carry negative tracking; body and label
-/// text sit at near-zero tracking so dense sales data stays legible.
 class AppTextStyles {
-  // ---------------------------------------------------------------------------
-  // Display
-  // ---------------------------------------------------------------------------
-
   static const TextStyle displayLarge = TextStyle(
     fontFamily: 'Inter',
     fontSize: 57,
@@ -37,10 +28,6 @@ class AppTextStyles {
     letterSpacing: 0,
     color: AppColors.textPrimary,
   );
-
-  // ---------------------------------------------------------------------------
-  // Headline
-  // ---------------------------------------------------------------------------
 
   static const TextStyle headlineLarge = TextStyle(
     fontFamily: 'Inter',
@@ -69,10 +56,6 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // ---------------------------------------------------------------------------
-  // Title
-  // ---------------------------------------------------------------------------
-
   static const TextStyle titleLarge = TextStyle(
     fontFamily: 'Inter',
     fontSize: 22,
@@ -99,10 +82,6 @@ class AppTextStyles {
     letterSpacing: 0,
     color: AppColors.textPrimary,
   );
-
-  // ---------------------------------------------------------------------------
-  // Body
-  // ---------------------------------------------------------------------------
 
   static const TextStyle bodyLarge = TextStyle(
     fontFamily: 'Inter',
@@ -131,10 +110,6 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // ---------------------------------------------------------------------------
-  // Label
-  // ---------------------------------------------------------------------------
-
   static const TextStyle labelLarge = TextStyle(
     fontFamily: 'Inter',
     fontSize: 14,
@@ -162,10 +137,6 @@ class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // ---------------------------------------------------------------------------
-  // Caption / overline
-  // ---------------------------------------------------------------------------
-
   static const TextStyle caption = TextStyle(
     fontFamily: 'Inter',
     fontSize: 12,
@@ -184,76 +155,47 @@ class AppTextStyles {
     color: AppColors.textTertiary,
   );
 
-  // ---------------------------------------------------------------------------
-  // Existing semantic helpers
-  // ---------------------------------------------------------------------------
+  static TextStyle get displayLargeLight =>
+      displayLarge.copyWith(fontWeight: FontWeight.w400);
 
-  static TextStyle get displayLargeLight => displayLarge.copyWith(
-    fontWeight: FontWeight.w400,
-  );
+  static TextStyle get headlineMediumSecondary =>
+      headlineMedium.copyWith(color: AppColors.textSecondary);
 
-  static TextStyle get headlineMediumSecondary => headlineMedium.copyWith(
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get titleMediumAccent =>
+      titleMedium.copyWith(color: AppColors.accent);
 
-  static TextStyle get titleMediumAccent => titleMedium.copyWith(
-    color: AppColors.accent,
-  );
+  static TextStyle get bodyMediumSuccess =>
+      bodyMedium.copyWith(color: AppColors.success);
 
-  static TextStyle get bodyMediumSuccess => bodyMedium.copyWith(
-    color: AppColors.success,
-  );
+  static TextStyle get bodyMediumError =>
+      bodyMedium.copyWith(color: AppColors.error);
 
-  static TextStyle get bodyMediumError => bodyMedium.copyWith(
-    color: AppColors.error,
-  );
+  static TextStyle get captionTertiary =>
+      caption.copyWith(color: AppColors.textTertiary);
 
-  static TextStyle get captionTertiary => caption.copyWith(
-    color: AppColors.textTertiary,
-  );
+  static TextStyle get labelMediumWhite =>
+      labelMedium.copyWith(color: AppColors.textInverse);
 
-  static TextStyle get labelMediumWhite => labelMedium.copyWith(
-    color: AppColors.textInverse,
-  );
+  static TextStyle get kicker =>
+      overline.copyWith(color: AppColors.accent, fontWeight: FontWeight.w700);
 
-  // ---------------------------------------------------------------------------
-  // New semantic helpers (design foundation)
-  // ---------------------------------------------------------------------------
+  static TextStyle get overlinePrimary =>
+      overline.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600);
 
-  /// Amber kicker used above section titles and hero headers.
-  static TextStyle get kicker => overline.copyWith(
-    color: AppColors.accent,
-    fontWeight: FontWeight.w700,
-  );
+  static TextStyle get bodyMediumSecondary =>
+      bodyMedium.copyWith(color: AppColors.textSecondary);
 
-  static TextStyle get overlinePrimary => overline.copyWith(
-    color: AppColors.primary,
-    fontWeight: FontWeight.w600,
-  );
+  static TextStyle get bodySmallSecondary =>
+      bodySmall.copyWith(color: AppColors.textSecondary);
 
-  static TextStyle get bodyMediumSecondary => bodyMedium.copyWith(
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get bodySmallTertiary =>
+      bodySmall.copyWith(color: AppColors.textTertiary);
 
-  static TextStyle get bodySmallSecondary => bodySmall.copyWith(
-    color: AppColors.textSecondary,
-  );
+  static TextStyle get labelSmallSecondary =>
+      labelSmall.copyWith(color: AppColors.textSecondary);
 
-  static TextStyle get bodySmallTertiary => bodySmall.copyWith(
-    color: AppColors.textTertiary,
-  );
-
-  static TextStyle get labelSmallSecondary => labelSmall.copyWith(
-    color: AppColors.textSecondary,
-  );
-
-  static TextStyle get titleSmallPrimary => titleSmall.copyWith(
-    color: AppColors.primary,
-  );
-
-  // ---------------------------------------------------------------------------
-  // Line-height & scale tokens
-  // ---------------------------------------------------------------------------
+  static TextStyle get titleSmallPrimary =>
+      titleSmall.copyWith(color: AppColors.primary);
 
   static const double lineHeightTight = 1.2;
   static const double lineHeightNormal = 1.5;

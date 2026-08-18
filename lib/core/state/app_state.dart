@@ -8,11 +8,6 @@ import '../../models/report.dart';
 import '../../models/user.dart';
 import '../services/mock_api_service.dart';
 
-/// Central application state backed by [MockData].
-///
-/// Exposes read-only views over the underlying collections and a set of
-/// mutations that keep the user, reports, notifications, point transactions
-/// and leaderboard consistent with each other.
 class AppState extends ChangeNotifier {
   AppState() {
     _user = MockData.currentUser;
@@ -43,18 +38,14 @@ class AppState extends ChangeNotifier {
   late AppNotificationPreferences _preferences;
   late List<LeaderboardEntry> _leaderboard;
 
-  // --- read-only views ---
-
   User get user => _user;
 
-  /// Newest first.
   List<Report> get reports {
     final sorted = List<Report>.of(_reports)
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return List.unmodifiable(sorted);
   }
 
-  /// Newest first.
   List<AppNotification> get notifications {
     final sorted = List<AppNotification>.of(_notifications)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
@@ -63,21 +54,18 @@ class AppState extends ChangeNotifier {
 
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  /// Newest first.
   List<PointTransaction> get pointTransactions {
     final sorted = List<PointTransaction>.of(_pointTransactions)
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     return List.unmodifiable(sorted);
   }
 
-  /// Sorted by points descending, ranks recomputed 1..n.
   List<LeaderboardEntry> get leaderboardByPoints {
     final sorted = List<LeaderboardEntry>.of(_leaderboard)
       ..sort((a, b) => b.points.compareTo(a.points));
     return _ranked(sorted);
   }
 
-  /// Sorted by averageScore descending, ranks recomputed 1..n.
   List<LeaderboardEntry> get leaderboardByQuality {
     final sorted = List<LeaderboardEntry>.of(_leaderboard)
       ..sort((a, b) => b.averageScore.compareTo(a.averageScore));
@@ -86,10 +74,7 @@ class AppState extends ChangeNotifier {
 
   AppNotificationPreferences get preferences => _preferences;
 
-  /// Mirrors [MockApiService.simulateOffline].
   bool get isOfflineSimulated => MockApiService.simulateOffline;
-
-  // --- mutations ---
 
   Report addReport({
     required Outlet outlet,
@@ -110,7 +95,7 @@ class AppState extends ChangeNotifier {
     final confidenceScore = signals.isEmpty
         ? 0.0
         : signals.map((s) => s.confidence).reduce((a, b) => a + b) /
-            signals.length;
+              signals.length;
     final pointsEarned = 15 + 5 * signals.length;
     final confidence = signals.any((s) => s.confidence >= 0.9)
         ? ReportConfidence.high
@@ -149,11 +134,11 @@ class AppState extends ChangeNotifier {
 
     _reports.insert(0, report);
 
-    // Update the current user.
     final stats = _user.stats;
     final wasActiveYesterday = _isYesterday(_user.lastActive);
-    final newStreak =
-        wasActiveYesterday ? _user.currentStreak + 1 : _user.currentStreak;
+    final newStreak = wasActiveYesterday
+        ? _user.currentStreak + 1
+        : _user.currentStreak;
     final isVoice = inputType == ReportInputType.voice;
 
     _user = _user.copyWith(
@@ -175,7 +160,6 @@ class AppState extends ChangeNotifier {
       ),
     );
 
-    // Record the point transaction.
     _pointTransactions.insert(
       0,
       PointTransaction(
@@ -189,12 +173,10 @@ class AppState extends ChangeNotifier {
       ),
     );
 
-    // Notify the user.
     _notifications.insert(
       0,
       AppNotification(
-        id:
-            'notif_${(_notifications.length + 1).toString().padLeft(3, '0')}',
+        id: 'notif_${(_notifications.length + 1).toString().padLeft(3, '0')}',
         title: 'Laporan Diproses',
         subtitle: outlet.name,
         body:
@@ -210,16 +192,16 @@ class AppState extends ChangeNotifier {
       ),
     );
 
-    // Update the current user's leaderboard entry.
-    final leaderboardIndex =
-        _leaderboard.indexWhere((e) => e.userId == _user.id);
+    final leaderboardIndex = _leaderboard.indexWhere(
+      (e) => e.userId == _user.id,
+    );
     if (leaderboardIndex != -1) {
       final entry = _leaderboard[leaderboardIndex];
       final existingWeekCount = entry.reportsThisWeek;
       final newQuality = (report.confidenceScore ?? 0.0) * 10;
       final newAverageScore = existingWeekCount > 0
           ? (entry.averageScore * existingWeekCount + newQuality) /
-              (existingWeekCount + 1)
+                (existingWeekCount + 1)
           : newQuality;
       _leaderboard[leaderboardIndex] = LeaderboardEntry(
         userId: entry.userId,
@@ -243,8 +225,10 @@ class AppState extends ChangeNotifier {
   void markNotificationRead(String id) {
     final index = _notifications.indexWhere((n) => n.id == id);
     if (index == -1 || _notifications[index].isRead) return;
-    _notifications[index] =
-        _copyNotification(_notifications[index], isRead: true);
+    _notifications[index] = _copyNotification(
+      _notifications[index],
+      isRead: true,
+    );
     notifyListeners();
   }
 
@@ -267,8 +251,18 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateProfile({String? name, String? email, String? phone}) {
-    _user = _user.copyWith(name: name, email: email, phone: phone);
+  void updateProfile({
+    String? name,
+    String? email,
+    String? phone,
+    String? avatarUrl,
+  }) {
+    _user = _user.copyWith(
+      name: name,
+      email: email,
+      phone: phone,
+      avatarUrl: avatarUrl,
+    );
     notifyListeners();
   }
 
@@ -277,8 +271,6 @@ class AppState extends ChangeNotifier {
     MockApiService.simulateOffline = value;
     notifyListeners();
   }
-
-  // --- helpers ---
 
   List<LeaderboardEntry> _ranked(List<LeaderboardEntry> entries) {
     return List.unmodifiable(

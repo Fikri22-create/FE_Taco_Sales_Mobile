@@ -95,8 +95,7 @@ class Report {
       'inputType': inputType.name,
       'content': content,
       'extractedEntities': extractedEntities,
-      'competitorSignals':
-          competitorSignals.map((e) => e.toJson()).toList(),
+      'competitorSignals': competitorSignals.map((e) => e.toJson()).toList(),
       'aiAnalysis': aiAnalysis?.toJson(),
       'status': status.name,
       'confidence': confidence.name,
@@ -197,8 +196,7 @@ class AIAnalysis {
       'structuredData': structuredData,
       'overallScore': overallScore,
       'sentiment': sentiment,
-      'extractedEntities':
-          extractedEntities.map((e) => e.toJson()).toList(),
+      'extractedEntities': extractedEntities.map((e) => e.toJson()).toList(),
     };
   }
 }
@@ -281,10 +279,7 @@ class ReportMetadata {
   }
 }
 
-enum ReportInputType {
-  voice,
-  text,
-}
+enum ReportInputType { voice, text }
 
 enum ReportStatus {
   draft,
@@ -298,9 +293,4 @@ enum ReportStatus {
   archived,
 }
 
-enum ReportConfidence {
-  low,
-  medium,
-  high,
-  veryHigh,
-}
+enum ReportConfidence { low, medium, high, veryHigh }

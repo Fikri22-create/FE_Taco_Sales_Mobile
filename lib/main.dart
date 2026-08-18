@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:taco_sales_insight/core/state/app_scope.dart';
 import 'package:taco_sales_insight/shared/app_colors.dart';
 import 'package:taco_sales_insight/shared/app_text_styles.dart';
@@ -19,6 +18,7 @@ import 'package:taco_sales_insight/features/report/ai_confirmation_screen.dart';
 import 'package:taco_sales_insight/features/report/report_summary_screen.dart';
 import 'package:taco_sales_insight/features/history/history_screen.dart';
 import 'package:taco_sales_insight/features/profile/profile_screen.dart';
+import 'package:taco_sales_insight/features/profile/edit_profile_screen.dart';
 import 'package:taco_sales_insight/features/gamification/points_screen.dart';
 import 'package:taco_sales_insight/features/gamification/badges_screen.dart';
 import 'package:taco_sales_insight/features/gamification/streak_screen.dart';
@@ -27,15 +27,7 @@ import 'package:taco_sales_insight/features/notifications/notifications_screen.d
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await EasyLocalization.ensureInitialized();
-  runApp(
-    EasyLocalization(
-      supportedLocales: const [Locale('id'), Locale('en')],
-      path: 'assets/translations',
-      fallbackLocale: const Locale('id'),
-      child: const TacoSalesInsightApp(),
-    ),
-  );
+  runApp(const TacoSalesInsightApp());
 }
 
 class TacoSalesInsightApp extends StatelessWidget {
@@ -57,14 +49,17 @@ class TacoSalesInsightApp extends StatelessWidget {
           '/report/select-outlet': (context) => const SelectOutletScreen(),
           '/history': (context) => const MainNavigationScreen(initialIndex: 2),
           '/profile': (context) => const MainNavigationScreen(initialIndex: 3),
+          '/profile/edit': (context) => const EditProfileScreen(),
           '/settings': (context) => const SettingsScreen(),
 
-          '/report/outlet-detail': (context) => const OutletDetailScreenWrapper(),
+          '/report/outlet-detail': (context) =>
+              const OutletDetailScreenWrapper(),
           '/report/input-mode': (context) => const InputModeScreenWrapper(),
           '/report/voice-input': (context) => const VoiceInputScreenWrapper(),
           '/report/text-input': (context) => const TextInputScreenWrapper(),
           '/report/processing': (context) => const ProcessingScreenWrapper(),
-          '/report/ai-confirmation': (context) => const AIConfirmationScreenWrapper(),
+          '/report/ai-confirmation': (context) =>
+              const AIConfirmationScreenWrapper(),
           '/report/summary': (context) => const ReportSummaryScreenWrapper(),
 
           '/profile/points': (context) => const PointsScreen(),
@@ -124,9 +119,7 @@ class TacoSalesInsightApp extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         titleTextStyle: AppTextStyles.titleLarge,
         iconTheme: IconThemeData(color: AppColors.textPrimary),
-        shape: Border(
-          bottom: BorderSide(color: AppColors.border, width: 1),
-        ),
+        shape: Border(bottom: BorderSide(color: AppColors.border, width: 1)),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
@@ -250,9 +243,7 @@ class TacoSalesInsightApp extends StatelessWidget {
           color: Colors.white,
         ),
         side: const BorderSide(color: AppColors.border, width: 1),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       ),
 
@@ -263,9 +254,7 @@ class TacoSalesInsightApp extends StatelessWidget {
         ),
         behavior: SnackBarBehavior.floating,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
 
       dialogTheme: const DialogThemeData(
@@ -331,19 +320,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _selectedIndex = widget.initialIndex;
   }
 
-  static final List<Widget> _screens = [
-    const HomeScreen(),
+  late final List<Widget> _screens = [
+    HomeScreen(onCreateReport: () => _onItemTapped(1)),
     const SelectOutletScreen(),
-    const HistoryScreen(),
+    HistoryScreen(onCreateReport: () => _onItemTapped(1)),
     const ProfileScreen(),
   ];
 
   static final List<NavItem> _navItems = [
-    NavItem(
-      icon: Iconsax.home_copy,
-      activeIcon: Iconsax.home,
-      label: 'Home',
-    ),
+    NavItem(icon: Iconsax.home_copy, activeIcon: Iconsax.home, label: 'Home'),
     NavItem(
       icon: Iconsax.document_text_1_copy,
       activeIcon: Iconsax.document_text_1,

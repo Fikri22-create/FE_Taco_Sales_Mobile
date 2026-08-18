@@ -45,7 +45,6 @@ class _FloatingNavigationDockState extends State<FloatingNavigationDock>
       ),
     );
 
-    // Initialize active state
     for (int i = 0; i < _itemControllers.length; i++) {
       if (i == widget.selectedIndex) {
         _itemControllers[i].forward();
@@ -57,9 +56,7 @@ class _FloatingNavigationDockState extends State<FloatingNavigationDock>
   void didUpdateWidget(FloatingNavigationDock oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedIndex != widget.selectedIndex) {
-      // Animate previous active item to inactive
       _itemControllers[oldWidget.selectedIndex].reverse();
-      // Animate new active item to active
       _itemControllers[widget.selectedIndex].forward();
     }
   }
@@ -133,113 +130,101 @@ class AnimatedNavItem extends AnimatedWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isActive = animation.value > 0.5;
-    final progress = animation.value;
-
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         height: 56,
-        child: AnimatedBuilder(
-          animation: animation,
-          builder: (context, child) {
-            if (isActive) {
-              return _buildActiveItem(progress);
-            } else {
-              return _buildInactiveItem(progress);
-            }
-          },
-        ),
-      ),
-    );
-  }
+        child: Center(
+          child: AnimatedBuilder(
+            animation: animation,
+            builder: (context, child) {
+              final progress = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              ).value;
 
-  Widget _buildActiveItem(double progress) {
-    // Scale animation for active state
-    final scaleValue = 0.85 + (progress * 0.15);
-    
-    return Transform.scale(
-      scale: scaleValue,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              AppColors.primary,
-              AppColors.secondary.withValues(alpha: 0.85),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.25 * progress),
-              blurRadius: 16 * progress,
-              offset: Offset(0, 6 * progress),
-            ),
-            BoxShadow(
-              color: AppColors.secondary.withValues(alpha: 0.1 * progress),
-              blurRadius: 8 * progress,
-              offset: Offset(0, 2 * progress),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Icon with rotation animation
-            Transform.rotate(
-              angle: progress * 0.1,
-              child: Icon(
-                item.activeIcon,
-                size: 18,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Label with fade-in animation
-            Opacity(
-              opacity: progress,
-              child: Text(
-                item.label,
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.3,
+              final iconColor = Color.lerp(
+                AppColors.textTertiary,
+                Colors.white,
+                progress,
+              )!;
+
+              final baseColor = AppColors.surfaceVariant.withValues(alpha: 0.6);
+
+              return Container(
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color.lerp(baseColor, AppColors.primary, progress)!,
+                      Color.lerp(
+                        baseColor,
+                        AppColors.secondary.withValues(alpha: 0.85),
+                        progress,
+                      )!,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Color.lerp(
+                      AppColors.border.withValues(alpha: 0.3),
+                      Colors.white.withValues(alpha: 0.2),
+                      progress,
+                    )!,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(
+                        alpha: 0.25 * progress,
+                      ),
+                      blurRadius: 16 * progress,
+                      offset: Offset(0, 6 * progress),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInactiveItem(double progress) {
-    // Fade out animation for inactive state
-    final opacityValue = 1.0 - (progress * 0.4);
-
-    return Opacity(
-      opacity: opacityValue,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceVariant.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.border.withValues(alpha: 0.3),
-            width: 1,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Transform.scale(
+                      scale: 1.0 + (0.15 * progress),
+                      child: Icon(
+                        progress > 0.5 ? item.activeIcon : item.icon,
+                        size: 20,
+                        color: iconColor,
+                      ),
+                    ),
+                    ClipRect(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: progress,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Transform.translate(
+                            offset: Offset(-10 * (1 - progress), 0),
+                            child: Opacity(
+                              opacity: progress,
+                              child: Text(
+                                item.label,
+                                style: AppTextStyles.labelMedium.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                                maxLines: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
-        ),
-        child: Icon(
-          item.icon,
-          size: 18,
-          color: AppColors.textTertiary,
         ),
       ),
     );

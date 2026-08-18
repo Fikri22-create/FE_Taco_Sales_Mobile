@@ -9,7 +9,6 @@ class MockApiException implements Exception {
 class MockApiService {
   static bool simulateOffline = false;
 
-  /// Simulates a network fetch: latency, then either throws (offline) or returns data.
   static Future<T> fetch<T>(
     T Function() load, {
     Duration delay = const Duration(milliseconds: 700),

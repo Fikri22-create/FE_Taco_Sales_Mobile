@@ -5,10 +5,6 @@ import 'app_colors.dart';
 import 'app_text_styles.dart';
 import 'common_widgets.dart';
 
-/// Shows the shared report detail bottom sheet.
-///
-/// Used by History and Home so the report detail experience stays
-/// consistent across the app.
 Future<void> showReportDetailSheet(BuildContext context, Report report) {
   return showModalBottomSheet(
     context: context,
@@ -38,7 +34,6 @@ class ReportDetailSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag handle
             Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Center(
@@ -78,7 +73,6 @@ class ReportDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Outlet identity
                   TacoCard(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -114,7 +108,6 @@ class ReportDetailSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // Status + confidence + points
                   Row(
                     children: [
                       StatusBadge(status: report.status),
@@ -152,7 +145,6 @@ class ReportDetailSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // Report content
                   Text(
                     'Isi Laporan',
                     style: AppTextStyles.titleSmall.copyWith(
@@ -160,13 +152,9 @@ class ReportDetailSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    report.content,
-                    style: AppTextStyles.bodyMedium,
-                  ),
+                  Text(report.content, style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 24),
 
-                  // Metadata
                   TacoCard(
                     backgroundColor: AppColors.surfaceVariant,
                     showBorder: false,
@@ -194,10 +182,7 @@ class ReportDetailSheet extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    'Kata',
-                                    style: AppTextStyles.caption,
-                                  ),
+                                  Text('Kata', style: AppTextStyles.caption),
                                 ],
                               ),
                             ),
@@ -247,7 +232,6 @@ class ReportDetailSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  // AI analysis
                   if (report.aiAnalysis != null) ...[
                     TacoCard(
                       backgroundColor: AppColors.infoLight,
@@ -317,7 +301,6 @@ class ReportDetailSheet extends StatelessWidget {
                     const SizedBox(height: 16),
                   ],
 
-                  // Actions
                   Row(
                     children: [
                       Expanded(

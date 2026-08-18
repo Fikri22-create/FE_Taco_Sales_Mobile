@@ -4,19 +4,6 @@ import 'package:taco_sales_insight/models/report.dart';
 import 'app_colors.dart';
 import 'app_text_styles.dart';
 
-/// Shared TACO design foundation.
-///
-/// Conventions enforced here:
-///   • Containers use restrained 8–12px radii and hairline borders.
-///   • Icon tiles are 40px tinted rounded squares ([TacoIconTile]).
-///   • Section spacing is 24px; card padding is 16–20px.
-///   • Buttons are flat (no shadows) with crisp ink ripples.
-///   • Status/badges use 8px radius pills, not full capsules.
-
-// ---------------------------------------------------------------------------
-// Card
-// ---------------------------------------------------------------------------
-
 class TacoCard extends StatelessWidget {
   final Widget child;
   final EdgeInsets? padding;
@@ -72,11 +59,6 @@ class TacoCard extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Section header
-// ---------------------------------------------------------------------------
-
-/// Section heading with the signature amber tick motif.
 class SectionHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -127,41 +109,21 @@ class SectionHeader extends StatelessWidget {
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 6),
-                  Text(
-                    subtitle!,
-                    style: AppTextStyles.bodyMediumSecondary,
-                  ),
+                  Text(subtitle!, style: AppTextStyles.bodyMediumSecondary),
                 ],
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
         ],
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Button
-// ---------------------------------------------------------------------------
+enum ButtonType { primary, secondary, outline, text, danger }
 
-enum ButtonType {
-  primary,
-  secondary,
-  outline,
-  text,
-  danger,
-}
-
-enum ButtonSize {
-  small,
-  medium,
-  large,
-}
+enum ButtonSize { small, medium, large }
 
 class TacoButton extends StatelessWidget {
   final String text;
@@ -247,7 +209,9 @@ class TacoButton extends StatelessWidget {
       case ButtonSize.large:
         verticalPadding = 16;
         horizontalPadding = 24;
-        textStyle = AppTextStyles.bodyLarge.copyWith(fontWeight: FontWeight.w600);
+        textStyle = AppTextStyles.bodyLarge.copyWith(
+          fontWeight: FontWeight.w600,
+        );
     }
 
     final child = isLoading
@@ -263,14 +227,8 @@ class TacoButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (icon != null) ...[
-                icon!,
-                const SizedBox(width: 8),
-              ],
-              Text(
-                text,
-                style: textStyle.copyWith(color: textColor),
-              ),
+              if (icon != null) ...[icon!, const SizedBox(width: 8)],
+              Text(text, style: textStyle.copyWith(color: textColor)),
             ],
           );
 
@@ -288,7 +246,8 @@ class TacoButton extends StatelessWidget {
           highlightColor: splashColor,
           borderRadius: BorderRadius.circular(12),
           child: Container(
-            padding: padding ??
+            padding:
+                padding ??
                 EdgeInsets.symmetric(
                   vertical: verticalPadding,
                   horizontal: horizontalPadding,
@@ -305,10 +264,6 @@ class TacoButton extends StatelessWidget {
         : button;
   }
 }
-
-// ---------------------------------------------------------------------------
-// Text field
-// ---------------------------------------------------------------------------
 
 class TacoTextField extends StatelessWidget {
   final String label;
@@ -357,9 +312,7 @@ class TacoTextField extends StatelessWidget {
       children: [
         Text(
           '$label${isRequired ? ' *' : ''}',
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         TextFormField(
@@ -389,30 +342,19 @@ class TacoTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.primary,
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: AppColors.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.error,
-                width: 1.5,
-              ),
+              borderSide: const BorderSide(color: AppColors.error, width: 1.5),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: AppColors.error,
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: AppColors.error, width: 2),
             ),
-            contentPadding: contentPadding ??
-                const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+            contentPadding:
+                contentPadding ??
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             errorText: errorText,
           ),
         ),
@@ -420,10 +362,6 @@ class TacoTextField extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Badge
-// ---------------------------------------------------------------------------
 
 class TacoBadge extends StatelessWidget {
   final String text;
@@ -478,7 +416,8 @@ class TacoBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding:
+          padding ?? const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: backgroundColor ?? AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(borderRadius ?? 8),
@@ -487,11 +426,7 @@ class TacoBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(
-              icon,
-              size: 12,
-              color: textColor ?? AppColors.textSecondary,
-            ),
+            Icon(icon, size: 12, color: textColor ?? AppColors.textSecondary),
             const SizedBox(width: 4),
           ],
           Text(
@@ -507,19 +442,11 @@ class TacoBadge extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Loading
-// ---------------------------------------------------------------------------
-
 class LoadingIndicator extends StatelessWidget {
   final String? message;
   final Color? color;
 
-  const LoadingIndicator({
-    super.key,
-    this.message,
-    this.color,
-  });
+  const LoadingIndicator({super.key, this.message, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -553,12 +480,6 @@ class LoadingIndicator extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// State views (empty / error / offline)
-// ---------------------------------------------------------------------------
-
-/// Shared state-view scaffold: a soft icon tile + headline + optional
-/// supporting text. Keeps EmptyState / ErrorState / OfflineState consistent.
 class _StateView extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
@@ -714,11 +635,6 @@ class OfflineState extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
-
-/// Maps a [ReportStatus] to a compact colored pill with an Iconsax icon.
 class StatusBadge extends StatelessWidget {
   final ReportStatus status;
 
@@ -819,10 +735,6 @@ class StatusBadge extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// List item
-// ---------------------------------------------------------------------------
-
 class TacoListItem extends StatelessWidget {
   final Widget leading;
   final Widget title;
@@ -852,7 +764,9 @@ class TacoListItem extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: Container(
-              padding: padding ?? const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding:
+                  padding ??
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               child: Row(
                 children: [
                   leading,
@@ -879,19 +793,11 @@ class TacoListItem extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 1,
-            color: AppColors.divider,
-          ),
+          Divider(height: 1, thickness: 1, color: AppColors.divider),
       ],
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Progress bar
-// ---------------------------------------------------------------------------
 
 class ProgressBar extends StatelessWidget {
   final double value;
@@ -937,13 +843,6 @@ class ProgressBar extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// NEW — signature shared widgets
-// ---------------------------------------------------------------------------
-
-/// The app's standard icon container: a 40px tinted rounded square with a
-/// crisp Iconsax glyph. Used for list leading icons, stat tiles and any
-/// "icon + label" row across the app.
 class TacoIconTile extends StatelessWidget {
   final IconData icon;
   final Color? color;
@@ -980,10 +879,6 @@ class TacoIconTile extends StatelessWidget {
   }
 }
 
-/// Compact "TACO" brand wordmark — the app's signature mark.
-///
-/// Deep navy letterset with a single amber dot. Use [isLight] on navy
-/// hero surfaces.
 class TacoWordmark extends StatelessWidget {
   final bool isLight;
   final double fontSize;
@@ -1028,9 +923,6 @@ class TacoWordmark extends StatelessWidget {
   }
 }
 
-/// Hero page header: optional amber kicker + strong title + quiet subtitle,
-/// with an optional trailing action. The refined "hero" treatment for
-/// screen headers.
 class TacoHeroHeader extends StatelessWidget {
   final String? kicker;
   final String title;
@@ -1062,36 +954,21 @@ class TacoHeroHeader extends StatelessWidget {
                   Text(kicker!, style: AppTextStyles.kicker),
                   const SizedBox(height: 6),
                 ],
-                Text(
-                  title,
-                  style: AppTextStyles.headlineMedium,
-                ),
+                Text(title, style: AppTextStyles.headlineMedium),
                 if (subtitle != null) ...[
                   const SizedBox(height: 6),
-                  Text(
-                    subtitle!,
-                    style: AppTextStyles.bodyMediumSecondary,
-                  ),
+                  Text(subtitle!, style: AppTextStyles.bodyMediumSecondary),
                 ],
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
         ],
       ),
     );
   }
 }
 
-/// Deep-navy hero band with a soft rounded bottom — used at the top of
-/// flow screens to give the app its premium B2B identity.
-///
-/// Renders white text on [AppColors.navySurface]. Wrap the screen body
-/// with this above the scrollable content; screens handle their own
-/// status-bar padding.
 class TacoHeroBand extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -1112,21 +989,15 @@ class TacoHeroBand extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: padding ??
-          const EdgeInsets.fromLTRB(20, 20, 20, 28),
+      padding: padding ?? const EdgeInsets.fromLTRB(20, 20, 20, 28),
       decoration: const BoxDecoration(
         color: AppColors.navySurface,
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (leading != null) ...[
-            leading!,
-            const SizedBox(width: 16),
-          ],
+          if (leading != null) ...[leading!, const SizedBox(width: 16)],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1149,11 +1020,108 @@ class TacoHeroBand extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 12),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 12), trailing!],
         ],
+      ),
+    );
+  }
+}
+
+class TacoPremiumHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final bool showBackButton;
+  final VoidCallback? onBackPressed;
+  final Widget? trailing;
+  final EdgeInsetsGeometry? padding;
+  final BorderRadius? borderRadius;
+
+  const TacoPremiumHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.showBackButton = false,
+    this.onBackPressed,
+    this.trailing,
+    this.padding,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.secondary.withValues(alpha: 0.7),
+          ],
+        ),
+        borderRadius:
+            borderRadius ??
+            const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
+            ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      padding: padding ?? const EdgeInsets.fromLTRB(24, 16, 24, 24),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (showBackButton)
+              GestureDetector(
+                onTap: onBackPressed ?? () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(
+                    Iconsax.arrow_left,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(left: showBackButton ? 8 : 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.headlineMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle!,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            if (trailing != null) ...[const SizedBox(width: 12), trailing!],
+          ],
+        ),
       ),
     );
   }

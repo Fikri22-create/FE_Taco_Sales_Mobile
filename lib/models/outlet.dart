@@ -159,12 +159,7 @@ class RecentActivity {
   }
 }
 
-enum OutletStatus {
-  active,
-  inactive,
-  newOutlet,
-  archived,
-}
+enum OutletStatus { active, inactive, newOutlet, archived }
 
 enum OutletCategory {
   supermarket,
@@ -177,9 +172,4 @@ enum OutletCategory {
   other,
 }
 
-enum OutletType {
-  modernTrade,
-  traditionalTrade,
-  hospitality,
-  institutional,
-}
+enum OutletType { modernTrade, traditionalTrade, hospitality, institutional }

@@ -72,9 +72,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         child: Column(
           children: [
             _buildHeader(context, unreadCount),
-            Expanded(
-              child: _buildBody(appState),
-            ),
+            Expanded(child: _buildBody(appState)),
           ],
         ),
       ),
@@ -82,101 +80,62 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildHeader(BuildContext context, int unreadCount) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.secondary.withValues(alpha: 0.7),
-          ],
-        ),
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-      child: SafeArea(
-        bottom: false,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Notifications',
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: Colors.white,
-                  ),
+    return TacoPremiumHeader(
+      title: 'Notifikasi',
+      subtitle: unreadCount > 0
+          ? '$unreadCount belum dibaca'
+          : 'Semua sudah dibaca',
+      showBackButton: Navigator.canPop(context),
+      trailing: unreadCount > 0
+          ? Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  unreadCount > 0
-                      ? '$unreadCount unread'
-                      : 'All read',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-            if (unreadCount > 0)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _markAllAsRead,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.25),
-                    width: 1,
-                  ),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: _markAllAsRead,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Iconsax.tick_circle,
-                          size: 16,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Iconsax.tick_circle,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Tandai Semua Dibaca',
+                        style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Mark All Read',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
+            )
+          : null,
     );
   }
 
   Widget _buildBody(AppState appState) {
     switch (_status) {
       case _LoadStatus.loading:
-        return LoadingIndicator(message: 'Loading notifications...');
+        return LoadingIndicator(message: 'Memuat notifikasi...');
       case _LoadStatus.error:
         if (appState.isOfflineSimulated) {
           return OfflineState(onRetry: _load);
         }
         return ErrorState(
-          title: 'Error loading notifications',
+          title: 'Gagal memuat notifikasi',
           subtitle: _errorMessage,
           onRetry: _load,
         );
@@ -211,7 +170,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
-                  'Unread',
+                  'Belum Dibaca',
                   '$unreadCount',
                   AppColors.error,
                   Iconsax.notification_bing_copy,
@@ -221,14 +180,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
           const SizedBox(height: 24),
           SectionHeader(
-            title: 'Latest Notifications',
-            subtitle: 'Stay updated with your recent messages',
+            title: 'Notifikasi',
+            subtitle: 'Ikuti pesan terbaru Anda',
           ),
           const SizedBox(height: 16),
           if (notifications.isEmpty)
             EmptyState(
-              title: 'No Notifications',
-              subtitle: 'You\'re all caught up!',
+              title: 'Belum Ada Notifikasi',
+              subtitle: 'Semuanya sudah dibaca',
             )
           else
             Column(
@@ -237,7 +196,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (notifications.isNotEmpty) ...[
             const SizedBox(height: 24),
             TacoButton(
-              text: 'Clear All',
+              text: 'Hapus Semua',
               onPressed: _showClearConfirmation,
               type: ButtonType.outline,
               isFullWidth: true,
@@ -260,16 +219,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            color.withValues(alpha: 0.1),
-            color.withValues(alpha: 0.05),
-          ],
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.05)],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.15),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
@@ -288,10 +241,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: color.withValues(alpha: 0.2),
-                width: 1,
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
@@ -364,10 +314,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     height: 48,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [
-                          data.color,
-                          data.color.withValues(alpha: 0.7),
-                        ],
+                        colors: [data.color, data.color.withValues(alpha: 0.7)],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
@@ -375,11 +322,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         width: 1,
                       ),
                     ),
-                    child: Icon(
-                      data.icon,
-                      size: 24,
-                      color: Colors.white,
-                    ),
+                    child: Icon(data.icon, size: 24, color: Colors.white),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -392,8 +335,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               child: Text(
                                 notification.title,
                                 style: AppTextStyles.titleSmall.copyWith(
-                                  fontWeight:
-                                      isUnread ? FontWeight.w700 : FontWeight.w600,
+                                  fontWeight: isUnread
+                                      ? FontWeight.w700
+                                      : FontWeight.w600,
                                   color: isUnread
                                       ? data.color
                                       : AppColors.textPrimary,
@@ -468,11 +412,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.1),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.1,
+                                  ),
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
-                                    color:
-                                        AppColors.primary.withValues(alpha: 0.2),
+                                    color: AppColors.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
                                     width: 1,
                                   ),
                                 ),
@@ -507,9 +454,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                         ),
                       ),
                       child: Icon(
-                        isUnread
-                            ? Iconsax.message_tick
-                            : Iconsax.message_notif,
+                        isUnread ? Iconsax.message_tick : Iconsax.message_notif,
                         size: 16,
                         color: isUnread ? data.color : AppColors.textTertiary,
                       ),
@@ -583,10 +528,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ],
                 ),
                 border: Border(
-                  bottom: BorderSide(
-                    color: AppColors.divider,
-                    width: 1,
-                  ),
+                  bottom: BorderSide(color: AppColors.divider, width: 1),
                 ),
               ),
               child: Column(
@@ -617,14 +559,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Notification Settings',
+                              'Pengaturan Notifikasi',
                               style: AppTextStyles.titleMedium.copyWith(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Manage your notification preferences',
+                              'Kelola preferensi notifikasi Anda',
                               style: AppTextStyles.caption.copyWith(
                                 color: AppColors.textSecondary,
                               ),
@@ -646,29 +588,45 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   List<Widget> _buildPreferenceRows(AppNotificationPreferences prefs) {
     final items = [
-      ('Report Processed', prefs.receiveReportNotifications,
-          (bool v) => _updatePreference(prefs, receiveReportNotifications: v)),
-      ('Achievement', prefs.receiveAchievementNotifications,
-          (bool v) => _updatePreference(prefs, receiveAchievementNotifications: v)),
-      ('Streak', prefs.receiveStreakNotifications,
-          (bool v) => _updatePreference(prefs, receiveStreakNotifications: v)),
-      ('Leaderboard', prefs.receiveLeaderboardNotifications,
-          (bool v) => _updatePreference(prefs, receiveLeaderboardNotifications: v)),
-      ('System', prefs.receiveAnnouncements,
-          (bool v) => _updatePreference(prefs, receiveAnnouncements: v)),
-      ('Reminder', prefs.receiveReminderNotifications,
-          (bool v) => _updatePreference(prefs, receiveReminderNotifications: v)),
+      (
+        'Laporan Diproses',
+        prefs.receiveReportNotifications,
+        (bool v) => _updatePreference(prefs, receiveReportNotifications: v),
+      ),
+      (
+        'Pencapaian',
+        prefs.receiveAchievementNotifications,
+        (bool v) =>
+            _updatePreference(prefs, receiveAchievementNotifications: v),
+      ),
+      (
+        'Streak',
+        prefs.receiveStreakNotifications,
+        (bool v) => _updatePreference(prefs, receiveStreakNotifications: v),
+      ),
+      (
+        'Leaderboard',
+        prefs.receiveLeaderboardNotifications,
+        (bool v) =>
+            _updatePreference(prefs, receiveLeaderboardNotifications: v),
+      ),
+      (
+        'Sistem',
+        prefs.receiveAnnouncements,
+        (bool v) => _updatePreference(prefs, receiveAnnouncements: v),
+      ),
+      (
+        'Pengingat',
+        prefs.receiveReminderNotifications,
+        (bool v) => _updatePreference(prefs, receiveReminderNotifications: v),
+      ),
     ];
 
     final List<Widget> widgets = [];
     for (int i = 0; i < items.length; i++) {
       final (title, value, onChanged) = items[i];
       widgets.add(
-        _buildPreferenceRow(
-          title: title,
-          value: value,
-          onChanged: onChanged,
-        ),
+        _buildPreferenceRow(title: title, value: value, onChanged: onChanged),
       );
       if (i < items.length - 1) {
         widgets.add(
@@ -683,29 +641,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     widgets.add(
-      Divider(
-        height: 1,
-        color: AppColors.divider,
-        indent: 0,
-        endIndent: 0,
-      ),
+      Divider(height: 1, color: AppColors.divider, indent: 0, endIndent: 0),
     );
 
     final soundAndVibrItems = [
-      ('Sound', prefs.soundEnabled,
-          (bool v) => _updatePreference(prefs, soundEnabled: v)),
-      ('Vibration', prefs.vibrationEnabled,
-          (bool v) => _updatePreference(prefs, vibrationEnabled: v)),
+      (
+        'Suara',
+        prefs.soundEnabled,
+        (bool v) => _updatePreference(prefs, soundEnabled: v),
+      ),
+      (
+        'Getar',
+        prefs.vibrationEnabled,
+        (bool v) => _updatePreference(prefs, vibrationEnabled: v),
+      ),
     ];
 
     for (int i = 0; i < soundAndVibrItems.length; i++) {
       final (title, value, onChanged) = soundAndVibrItems[i];
       widgets.add(
-        _buildPreferenceRow(
-          title: title,
-          value: value,
-          onChanged: onChanged,
-        ),
+        _buildPreferenceRow(title: title, value: value, onChanged: onChanged),
       );
       if (i < soundAndVibrItems.length - 1) {
         widgets.add(
@@ -754,7 +709,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 padding: const EdgeInsets.all(2),
                 child: AnimatedAlign(
                   duration: const Duration(milliseconds: 200),
-                  alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: value
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     width: 24,
                     height: 24,
@@ -791,27 +748,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     bool? vibrationEnabled,
   }) {
     context.read<AppState>().updatePreferences(
-          AppNotificationPreferences(
-            receiveReportNotifications:
-                receiveReportNotifications ?? prefs.receiveReportNotifications,
-            receiveAchievementNotifications: receiveAchievementNotifications ??
-                prefs.receiveAchievementNotifications,
-            receiveStreakNotifications:
-                receiveStreakNotifications ?? prefs.receiveStreakNotifications,
-            receiveLeaderboardNotifications: receiveLeaderboardNotifications ??
-                prefs.receiveLeaderboardNotifications,
-            receiveReminderNotifications: receiveReminderNotifications ??
-                prefs.receiveReminderNotifications,
-            receiveAnnouncements:
-                receiveAnnouncements ?? prefs.receiveAnnouncements,
-            receiveAlerts: prefs.receiveAlerts,
-            receiveFeedback: prefs.receiveFeedback,
-            soundEnabled: soundEnabled ?? prefs.soundEnabled,
-            vibrationEnabled: vibrationEnabled ?? prefs.vibrationEnabled,
-            quietHours: prefs.quietHours,
-            preferredChannels: prefs.preferredChannels,
-          ),
-        );
+      AppNotificationPreferences(
+        receiveReportNotifications:
+            receiveReportNotifications ?? prefs.receiveReportNotifications,
+        receiveAchievementNotifications:
+            receiveAchievementNotifications ??
+            prefs.receiveAchievementNotifications,
+        receiveStreakNotifications:
+            receiveStreakNotifications ?? prefs.receiveStreakNotifications,
+        receiveLeaderboardNotifications:
+            receiveLeaderboardNotifications ??
+            prefs.receiveLeaderboardNotifications,
+        receiveReminderNotifications:
+            receiveReminderNotifications ?? prefs.receiveReminderNotifications,
+        receiveAnnouncements:
+            receiveAnnouncements ?? prefs.receiveAnnouncements,
+        receiveAlerts: prefs.receiveAlerts,
+        receiveFeedback: prefs.receiveFeedback,
+        soundEnabled: soundEnabled ?? prefs.soundEnabled,
+        vibrationEnabled: vibrationEnabled ?? prefs.vibrationEnabled,
+        quietHours: prefs.quietHours,
+        preferredChannels: prefs.preferredChannels,
+      ),
+    );
   }
 
   String _formatTime(DateTime dateTime) {
@@ -819,15 +778,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final difference = now.difference(dateTime);
 
     if (difference.inSeconds < 60) {
-      return 'just now';
+      return 'Baru saja';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} minutes ago';
+      return '${difference.inMinutes} mnt lalu';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours} hours ago';
+      return '${difference.inHours} jam lalu';
     } else if (difference.inDays == 1) {
-      return 'yesterday';
+      return 'Kemarin';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+      return '${difference.inDays} hr lalu';
     } else {
       return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
@@ -850,11 +809,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   void _markAllAsRead() {
     context.read<AppState>().markAllNotificationsRead();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Marked as read'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Ditandai sudah dibaca')));
   }
 
   Future<void> _showClearConfirmation() async {

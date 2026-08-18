@@ -335,13 +335,7 @@ enum BadgeCategory {
   achievement,
 }
 
-enum BadgeTier {
-  bronze,
-  silver,
-  gold,
-  platinum,
-  diamond,
-}
+enum BadgeTier { bronze, silver, gold, platinum, diamond }
 
 enum PointTransactionType {
   report,

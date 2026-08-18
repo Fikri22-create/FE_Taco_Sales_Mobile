@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:taco_sales_insight/data/mock_data.dart';
 import 'package:taco_sales_insight/models/outlet.dart';
@@ -20,8 +20,6 @@ class _CategoryOption {
   const _CategoryOption(this.label, this.value);
 }
 
-/// Distinct Iconsax glyph per outlet category so the list stays
-/// scannable without relying on color alone.
 IconData _categoryIcon(String category) {
   switch (category) {
     case 'supermarket':
@@ -51,13 +49,14 @@ class _SelectOutletScreenState extends State<SelectOutletScreen> {
 
   List<Outlet> get _filteredOutlets {
     return MockData.outlets.where((outlet) {
-      final matchesSearch = outlet.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch =
+          outlet.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           outlet.city.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           outlet.address.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final selectedValue = _selectedCategory.value;
-      final matchesCategory = selectedValue == null ||
-          outlet.category == selectedValue.name;
+      final matchesCategory =
+          selectedValue == null || outlet.category == selectedValue.name;
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -68,223 +67,164 @@ class _SelectOutletScreenState extends State<SelectOutletScreen> {
     final filtered = _filteredOutlets;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Laporan'),
-        automaticallyImplyLeading: false,
-        leading: Navigator.canPop(context)
-            ? IconButton(
-                icon: const Icon(Iconsax.arrow_left_2),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
-      ),
       body: Column(
         children: [
-          // Premium Hero Section with Gradient Kicker
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary,
-                  AppColors.primary.withValues(alpha: 0.85),
-                  AppColors.secondary.withValues(alpha: 0.4),
-                ],
-                stops: const [0.0, 0.6, 1.0],
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          TacoPremiumHeader(
+            title: 'Pilih Outlet',
+            subtitle: 'Pilih outlet untuk membuat laporan baru',
+            showBackButton: Navigator.canPop(context),
+          ),
+
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Gradient Kicker
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.accent,
-                          AppColors.accent.withValues(alpha: 0.8),
-                        ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          blurRadius: 16,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TacoTextField(
+                      label: '',
+                      hintText: 'Cari outlet, alamat, atau kota...',
+                      prefixIcon: Container(
+                        padding: const EdgeInsets.all(10),
+                        child: const Icon(
+                          Iconsax.search_normal_1,
+                          size: 20,
+                          color: AppColors.secondary,
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      'LAPORAN SALES',
-                      style: AppTextStyles.overline.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
+                      onChanged: (val) {
+                        setState(() {
+                          _searchQuery = val;
+                        });
+                      },
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Pilih Outlet',
-                    style: AppTextStyles.displaySmall.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Pilih outlet tujuan untuk memulai laporan kunjungan Anda.',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                  const SizedBox(height: 16),
 
-          // Search & Filter Section
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Premium Search Input with Icon Badge
-                Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: TacoTextField(
-                    label: '',
-                    hintText: 'Cari outlet, alamat, atau kota...',
-                    prefixIcon: Container(
-                      padding: const EdgeInsets.all(10),
-                      child: const Icon(
-                        Iconsax.search_normal_1,
-                        size: 20,
-                        color: AppColors.secondary,
-                      ),
+                  Text(
+                    'Kategori',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
                     ),
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
                   ),
-                ),
-                const SizedBox(height: 16),
-
-                // Category Filter Chips with Animations
-                Text(
-                  'Kategori',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 42,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: _categoryOptions.map((option) {
-                      final isSelected = _selectedCategory.label == option.label;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          decoration: BoxDecoration(
-                            gradient: isSelected
-                                ? LinearGradient(
-                                    colors: [
-                                      AppColors.secondary,
-                                      AppColors.secondary.withValues(alpha: 0.85),
-                                    ],
-                                  )
-                                : null,
-                            color: isSelected ? null : AppColors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.secondary.withValues(alpha: 0.3)
-                                  : AppColors.border,
-                              width: 1.5,
-                            ),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.secondary.withValues(alpha: 0.15),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ]
-                                : null,
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = option;
-                                });
-                              },
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 42,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: _categoryOptions.map((option) {
+                        final isSelected =
+                            _selectedCategory.label == option.label;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            decoration: BoxDecoration(
+                              gradient: isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        AppColors.secondary,
+                                        AppColors.secondary.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                      ],
+                                    )
+                                  : null,
+                              color: isSelected ? null : AppColors.surface,
                               borderRadius: BorderRadius.circular(12),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                child: Center(
-                                  child: Text(
-                                    option.label,
-                                    style: AppTextStyles.labelMedium.copyWith(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : AppColors.textPrimary,
-                                      fontWeight:
-                                          isSelected ? FontWeight.w700 : FontWeight.w600,
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.secondary.withValues(alpha: 0.3)
+                                    : AppColors.border,
+                                width: 1.5,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.secondary.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        blurRadius: 12,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedCategory = option;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      option.label,
+                                      style: AppTextStyles.labelMedium.copyWith(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 20),
 
-          // Outlet List
-          Expanded(
-            child: filtered.isEmpty
-                ? const EmptyState(
-                    title: 'Outlet Tidak Ditemukan',
-                    subtitle: 'Coba cari dengan kata kunci lain atau pilih kategori yang berbeda.',
-                    icon: Iconsax.shop,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(left: 20, right: 20, top: 8, bottom: 100),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final outlet = filtered[index];
-                      return _buildPremiumOutletCard(outlet);
-                    },
-                  ),
+                  if (filtered.isEmpty)
+                    const EmptyState(
+                      title: 'Outlet Tidak Ditemukan',
+                      subtitle:
+                          'Coba cari dengan kata kunci lain atau pilih kategori yang berbeda.',
+                      icon: Iconsax.shop,
+                    )
+                  else
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 8, bottom: 100),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final outlet = filtered[index];
+                        return _buildPremiumOutletCard(outlet);
+                      },
+                    ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // Premium outlet card with gradient avatar and depth shadow
   Widget _buildPremiumOutletCard(Outlet outlet) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -327,7 +267,6 @@ class _SelectOutletScreenState extends State<SelectOutletScreen> {
               ),
               child: Row(
                 children: [
-                  // Gradient Avatar
                   Container(
                     width: 56,
                     height: 56,
@@ -383,7 +322,10 @@ class _SelectOutletScreenState extends State<SelectOutletScreen> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
@@ -393,7 +335,9 @@ class _SelectOutletScreenState extends State<SelectOutletScreen> {
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: AppColors.accent.withValues(alpha: 0.3),
+                                  color: AppColors.accent.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   width: 0.5,
                                 ),
                               ),

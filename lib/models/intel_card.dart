@@ -99,11 +99,7 @@ class IntelCardTag {
   final IntelCardColorScheme color;
   final String? icon;
 
-  IntelCardTag({
-    required this.label,
-    required this.color,
-    this.icon,
-  });
+  IntelCardTag({required this.label, required this.color, this.icon});
 
   factory IntelCardTag.fromJson(Map<String, dynamic> json) {
     return IntelCardTag(
@@ -117,11 +113,7 @@ class IntelCardTag {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'label': label,
-      'color': color.name,
-      'icon': icon,
-    };
+    return {'label': label, 'color': color.name, 'icon': icon};
   }
 }
 
@@ -136,13 +128,7 @@ enum IntelCardType {
   comparison,
 }
 
-enum IntelCardTrend {
-  up,
-  down,
-  stable,
-  neutral,
-  warning,
-}
+enum IntelCardTrend { up, down, stable, neutral, warning }
 
 enum IntelCardColorScheme {
   blue,
@@ -155,15 +141,10 @@ enum IntelCardColorScheme {
   gray,
   indigo,
   teal,
-  orange
+  orange,
 }
 
-enum IntelCardStatus {
-  active,
-  inactive,
-  archived,
-  hidden,
-}
+enum IntelCardStatus { active, inactive, archived, hidden }
 
 class IntelCardSection {
   final String id;
@@ -226,11 +207,4 @@ class IntelCardSection {
   }
 }
 
-enum IntelCardLayout {
-  grid,
-  list,
-  carousel,
-  single,
-  twoColumn,
-  threeColumn,
-}
+enum IntelCardLayout { grid, list, carousel, single, twoColumn, threeColumn }

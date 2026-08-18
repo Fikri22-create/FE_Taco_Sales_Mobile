@@ -18,7 +18,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AppState>().user;
-    
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -34,182 +34,233 @@ class _ProfileScreenState extends State<ProfileScreen> {
             stops: const [0, 0.3, 0.7, 1.0],
           ),
         ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 110),
-          child: Column(
-            children: [
-              // Premium Hero Section
-              _buildHeroSection(user, context),
-              const SizedBox(height: 24),
-              
-              // Stats Bar
-              _buildStatsBar(user),
-              const SizedBox(height: 24),
-              
-              // Menu Items - Gamification Section
-              _buildMenuSection(
-                title: 'Gamification',
-                items: [
-                  _MenuItem(
-                    icon: Iconsax.star,
-                    title: 'Points',
-                    subtitle: 'Track your earnings',
-                    description: '${user.totalPoints} Points',
-                    iconColor: AppColors.accent,
-                    backgroundColor: AppColors.accent.withValues(alpha: 0.1),
-                    route: '/profile/points',
-                  ),
-                  _MenuItem(
-                    icon: Iconsax.award,
-                    title: 'Badges',
-                    subtitle: 'Your Achievements',
-                    description: '5 badges unlocked',
-                    iconColor: AppColors.secondary,
-                    backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
-                    route: '/profile/badges',
-                  ),
-                  _MenuItem(
-                    icon: Iconsax.flash_1,
-                    title: 'Streak',
-                    subtitle: 'Daily Consistency',
-                    description: '${user.currentStreak} consecutive days',
-                    iconColor: AppColors.streakActive,
-                    backgroundColor: AppColors.streakActive.withValues(alpha: 0.1),
-                    route: '/profile/streak',
-                  ),
-                  _MenuItem(
-                    icon: Iconsax.chart,
-                    title: 'Leaderboard',
-                    subtitle: 'Compare with friends',
-                    description: 'Rank #${_getRank(context)}',
-                    iconColor: AppColors.primary,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    route: '/profile/leaderboard',
-                  ),
-                ],
-                context: context,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 60,
+                  bottom: 110,
+                ),
+                child: Column(
+                  children: [
+                    _buildHeroSection(user, context),
+                    const SizedBox(height: 24),
+
+                    _buildStatsBar(user),
+                    const SizedBox(height: 24),
+
+                    _buildMenuSection(
+                      title: 'Gamifikasi',
+                      items: [
+                        _MenuItem(
+                          icon: Iconsax.star,
+                          title: 'Poin',
+                          subtitle: 'Lacak perolehan poin Anda',
+                          description: '${user.totalPoints} Poin',
+                          iconColor: AppColors.accent,
+                          backgroundColor: AppColors.accent.withValues(
+                            alpha: 0.1,
+                          ),
+                          route: '/profile/points',
+                        ),
+                        _MenuItem(
+                          icon: Iconsax.award,
+                          title: 'Badges',
+                          subtitle: 'Pencapaian Anda',
+                          description: '5 badge terbuka',
+                          iconColor: AppColors.secondary,
+                          backgroundColor: AppColors.secondary.withValues(
+                            alpha: 0.1,
+                          ),
+                          route: '/profile/badges',
+                        ),
+                        _MenuItem(
+                          icon: Iconsax.flash_1,
+                          title: 'Streak',
+                          subtitle: 'Konsistensi Harian',
+                          description:
+                              '${user.currentStreak} hari berturut-turut',
+                          iconColor: AppColors.streakActive,
+                          backgroundColor: AppColors.streakActive.withValues(
+                            alpha: 0.1,
+                          ),
+                          route: '/profile/streak',
+                        ),
+                        _MenuItem(
+                          icon: Iconsax.chart,
+                          title: 'Leaderboard',
+                          subtitle: 'Bandingkan dengan rekan',
+                          description: 'Peringkat #${_getRank(context)}',
+                          iconColor: AppColors.primary,
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          route: '/profile/leaderboard',
+                        ),
+                      ],
+                      context: context,
+                    ),
+                    const SizedBox(height: 24),
+
+                    _buildMenuSection(
+                      title: 'Aplikasi',
+                      items: [
+                        _MenuItem(
+                          icon: Iconsax.setting,
+                          title: 'Pengaturan',
+                          subtitle: 'Kelola preferensi',
+                          description: 'Notifikasi, tentang, dll',
+                          iconColor: AppColors.primary,
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          route: '/settings',
+                        ),
+                      ],
+                      context: context,
+                    ),
+                    const SizedBox(height: 24),
+
+                    _buildLogoutButton(context),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
-              const SizedBox(height: 24),
-              
-              // Settings Section
-              _buildMenuSection(
-                title: 'Application',
-                items: [
-                  _MenuItem(
-                    icon: Iconsax.setting,
-                    title: 'Settings',
-                    subtitle: 'Manage preferences',
-                    description: 'Language, notifications, etc',
-                    iconColor: AppColors.primary,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    route: '/settings',
-                  ),
-                ],
-                context: context,
-              ),
-              const SizedBox(height: 24),
-              
-              // Logout Button
-              _buildLogoutButton(context),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildHeroSection(User user, BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary.withValues(alpha: 0.05),
-            AppColors.secondary.withValues(alpha: 0.03),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Avatar with glow effect - LEFT SIDE
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppColors.primary,
-                  AppColors.secondary,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.05),
+                AppColors.secondary.withValues(alpha: 0.03),
               ],
             ),
-            child: Container(
-              margin: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
-              child: _buildAvatar(user),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primary, AppColors.secondary],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Container(
+                  margin: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.surface,
+                  ),
+                  child: _buildAvatar(user),
+                ),
+              ),
+              const SizedBox(width: 20),
+
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 44),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        user.name,
+                        style: AppTextStyles.titleLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        user.email,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 10),
+                      TacoBadge.info(text: user.region),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Positioned(
+          top: 12,
+          right: 12,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/profile/edit'),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(Iconsax.edit, size: 18, color: AppColors.primary),
+              ),
             ),
           ),
-          const SizedBox(width: 20),
-          
-          // User info - RIGHT SIDE
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  user.name,
-                  style: AppTextStyles.titleLarge.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  user.email,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 10),
-                TacoBadge.info(text: user.region),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -233,27 +284,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Expanded(
             child: _buildStatItem(
               value: '${user.totalReports}',
-              label: 'Reports',
+              label: 'Laporan',
               color: AppColors.primary,
             ),
           ),
-          Container(
-            width: 1,
-            height: 48,
-            color: AppColors.divider,
-          ),
+          Container(width: 1, height: 48, color: AppColors.divider),
           Expanded(
             child: _buildStatItem(
               value: '${user.totalPoints}',
-              label: 'Points',
+              label: 'Total Poin',
               color: AppColors.accent,
             ),
           ),
-          Container(
-            width: 1,
-            height: 48,
-            color: AppColors.divider,
-          ),
+          Container(width: 1, height: 48, color: AppColors.divider),
           Expanded(
             child: _buildStatItem(
               value: '${user.currentStreak}',
@@ -283,9 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
@@ -346,11 +387,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.white.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                item.icon,
-                color: item.iconColor,
-                size: 24,
-              ),
+              child: Icon(item.icon, color: item.iconColor, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -408,10 +445,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(Iconsax.logout, size: 20),
             SizedBox(width: 8),
-            Text(
-              'Logout',
-              style: AppTextStyles.labelLarge,
-            ),
+            Text('Keluar', style: AppTextStyles.labelLarge),
           ],
         ),
       ),
@@ -459,24 +493,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Logout from account?'),
-        content: const Text('Are you sure you want to logout from this account?'),
+        title: const Text('Keluar dari akun?'),
+        content: const Text('Apakah Anda yakin ingin keluar dari akun ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('You have logout from account (demo)'),
+                  content: Text('Anda telah keluar dari akun (demo)'),
                 ),
               );
               Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
-            child: const Text('Logout'),
+            child: const Text('Keluar'),
           ),
         ],
       ),
